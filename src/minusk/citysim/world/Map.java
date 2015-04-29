@@ -1,11 +1,24 @@
 package minusk.citysim.world;
 
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
+
 import java.util.HashMap;
 
+import minusk.citysim.Main;
 import minusk.citysim.entities.friendly.Player;
+import minusk.render.core.Input;
 import minusk.render.interfaces.Renderable;
+import minusk.render.interfaces.Updateable;
 
-public class Map implements Renderable {
+public class Map implements Renderable, Updateable {
 	public final Player player = new Player();
 	
 //	private final Point3I cache = new Point3I();
@@ -16,6 +29,29 @@ public class Map implements Renderable {
 	public Map() {
 		renderer = new MapRenderer();
 		map.put(new Point3I(0,0,0), new Chunk(0,0));
+	}
+	
+	@Override
+	public void update() {
+		Input input = Main.game.getInput();
+		int movement = input.isKeyDown(GLFW_KEY_LEFT_SHIFT)?2:input.isKeyDown(GLFW_KEY_LEFT_CONTROL)?1:0;
+		
+		if (input.isKeyDown(GLFW_KEY_W)) {
+			renderer.camera.transY -= (movement==2?0.046f:movement==1?0.11f:0.023f);
+		}
+		if (input.isKeyDown(GLFW_KEY_S)) {
+			renderer.camera.transY += (movement==2?0.046f:movement==1?0.11f:0.023f);
+		}
+		if (input.isKeyDown(GLFW_KEY_A)) {
+			renderer.camera.transX += (movement==2?0.046f:movement==1?0.11f:0.023f);
+		}
+		if (input.isKeyDown(GLFW_KEY_D)) {
+			renderer.camera.transX -= (movement==2?0.046f:movement==1?0.11f:0.023f);
+		}
+		if (input.getScrollY() > 0)
+			renderer.camera.zoom *= 2;
+		if (input.getScrollY() < 0)
+			renderer.camera.zoom /= 2;
 	}
 	
 	@Override

@@ -17,6 +17,7 @@ public class Main extends Game {
 	public void update() {
 		if (window.input.closeRequested())
 			endLoop();
+		map.update();
 	}
 
 	@Override

@@ -17,15 +17,17 @@ class MapRenderer {
 	private TextureDrawPass roadPass;
 	private ColorDrawPass colorPass;
 	
+	OrthoCamera camera = new OrthoCamera(0,1024/16f,576/16f,0);
+	
 	MapRenderer() {
 		Texture roadTex = new Texture(128,128,1,false);
 		roadTex.setTextureData(getClass().getResourceAsStream("/minusk/citysim/res/road.png"), 0);
 //		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 //		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		roadPass = new TextureDrawPass(roadTex);
-		roadPass.camera = new OrthoCamera(0,1024/16f,576/16f,0);
+		roadPass.camera = camera;
 		colorPass = new ColorDrawPass();
-		colorPass.camera = roadPass.camera;
+		colorPass.camera = camera;
 		colorPass.setBlendFunc(BlendFunc.ADDITIVE);
 	}
 	
@@ -50,9 +52,9 @@ class MapRenderer {
 		thing.scale(2/road.width);
 		for (MapStructures.LaneLine l : road.lanelines) {
 			Vec2 offset = new Vec2(thing);
-			offset.scale(l.offsetFromMiddle);
 			switch (l.type) {
 			case SOLID_WHITE:
+				offset.scale(l.offsetFromMiddle);
 				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, Color.Gray87);
 				break;
 			case LONG_DOTTED_WHITE:
@@ -62,9 +64,15 @@ class MapRenderer {
 			case SHORT_DOTTED_WHITE:
 				break;
 			case SOLID_YELLOW:
+				offset.scale(l.offsetFromMiddle);
 				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				break;
 			case SOLID_SOLID_YELLOW:
+				Vec2 f = new Vec2(offset);
+				offset.scale(l.offsetFromMiddle-0.1f);
+				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
+				f.scale(l.offsetFromMiddle+0.1f);
+				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				break;
 			case SOLID_DOTTED_YELLOW:
 				break;
