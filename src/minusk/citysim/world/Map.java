@@ -1,8 +1,5 @@
 package minusk.citysim.world;
 
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
-
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
@@ -49,9 +46,9 @@ public class Map implements Renderable, Updateable {
 			renderer.camera.transX -= (movement==2?0.046f:movement==1?0.11f:0.023f);
 		}
 		if (input.getScrollY() > 0)
-			renderer.camera.zoom *= 2;
+			renderer.camera.zoom *= 1.2;
 		if (input.getScrollY() < 0)
-			renderer.camera.zoom /= 2;
+			renderer.camera.zoom /= 1.2;
 	}
 	
 	@Override

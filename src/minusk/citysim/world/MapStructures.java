@@ -5,7 +5,7 @@ import minusk.render.math.Vec2;
 
 class MapStructures {
 	public static final class Road {
-		public final float x1, y1, x2, y2, width;
+		public final float x1, y1, x2, y2, width, length;
 		public final Vec2 perp = new Vec2();
 		public final LaneLine[] lanelines;
 		public Road(float x1, float y1, float x2, float y2, float width, LaneLine... lanes){
@@ -15,7 +15,8 @@ class MapStructures {
 			this.y2 = y2;
 			this.width = width;
 			perp.set(x2-x1, y2-y1);
-			perp.normalize();
+			length = perp.length();
+			perp.scale(1/length);
 			perp.transform(new Matrix2(0,-1,1,0));
 			lanelines = lanes;
 		}

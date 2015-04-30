@@ -11,6 +11,7 @@ import minusk.render.graphics.draw.ColorDrawPass;
 import minusk.render.graphics.draw.TextureDrawPass;
 import minusk.render.graphics.filters.BlendFunc;
 import minusk.render.graphics.globjects.Texture;
+import minusk.render.math.Matrix2;
 import minusk.render.math.Vec2;
 
 class MapRenderer {
@@ -58,26 +59,74 @@ class MapRenderer {
 				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, Color.Gray87);
 				break;
 			case LONG_DOTTED_WHITE:
+			{
+				offset.scale(l.offsetFromMiddle);
+				Vec2 roadDir = new Vec2(road.perp);
+				roadDir.transform(new Matrix2(0, 1, -1, 0));
+				for (int m = 0; m < road.length; m += 10)
+					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
+							road.x1+(roadDir.x*(m+5))+offset.x, road.y1+(roadDir.y*(m+5))+offset.y, 0.1f, Color.Gray87);
 				break;
+			}
 			case MEDIUM_DOTTED_WHITE:
+			{
+				offset.scale(l.offsetFromMiddle);
+				Vec2 roadDir = new Vec2(road.perp);
+				roadDir.transform(new Matrix2(0, 1, -1, 0));
+				for (int m = 0; m < road.length; m += 5)
+					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
+							road.x1+(roadDir.x*(m+2))+offset.x, road.y1+(roadDir.y*(m+2))+offset.y, 0.1f, Color.Gray87);
 				break;
+			}
 			case SHORT_DOTTED_WHITE:
+			{
+				offset.scale(l.offsetFromMiddle);
+				Vec2 roadDir = new Vec2(road.perp);
+				roadDir.transform(new Matrix2(0, 1, -1, 0));
+				for (int m = 0; m < road.length; m += 2)
+					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
+							road.x1+(roadDir.x*(m+1))+offset.x, road.y1+(roadDir.y*(m+1))+offset.y, 0.1f, Color.Gray87);
 				break;
+			}
 			case SOLID_YELLOW:
 				offset.scale(l.offsetFromMiddle);
 				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				break;
 			case SOLID_SOLID_YELLOW:
+			{
 				Vec2 f = new Vec2(offset);
 				offset.scale(l.offsetFromMiddle-0.1f);
 				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				f.scale(l.offsetFromMiddle+0.1f);
 				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				break;
+			}
 			case SOLID_DOTTED_YELLOW:
+			{
+				Vec2 f = new Vec2(offset);
+				offset.scale(l.offsetFromMiddle-0.1f);
+				Vec2 roadDir = new Vec2(road.perp);
+				roadDir.transform(new Matrix2(0, 1, -1, 0));
+				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
+				f.scale(l.offsetFromMiddle+0.1f);
+				for (int m = 0; m < road.length; m += 5)
+					colorPass.drawLine(road.x1+(roadDir.x*m)+f.x, road.y1+(roadDir.y*m)+f.y,
+							road.x1+(roadDir.x*(m+2))+f.x, road.y1+(roadDir.y*(m+2))+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				break;
+			}
 			case DOTTED_SOLID_YELLOW:
+			{
+				Vec2 f = new Vec2(offset);
+				offset.scale(l.offsetFromMiddle-0.1f);
+				Vec2 roadDir = new Vec2(road.perp);
+				roadDir.transform(new Matrix2(0, 1, -1, 0));
+				for (int m = 0; m < road.length; m += 5)
+					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
+							road.x1+(roadDir.x*(m+2))+offset.x, road.y1+(roadDir.y*(m+2))+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
+				f.scale(l.offsetFromMiddle+0.1f);
+				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
 				break;
+			}
 			case DOTTED_YELLOW:
 				break;
 			default:
