@@ -1,5 +1,7 @@
 package minusk.citysim.world;
 
+import java.util.ArrayList;
+
 import minusk.render.math.Matrix2;
 import minusk.render.math.Vec2;
 
@@ -7,8 +9,9 @@ class MapStructures {
 	public static final class Road {
 		public final float x1, y1, x2, y2, width, length;
 		public final Vec2 perp = new Vec2();
+		public final ArrayList<Vec2> controlPoints;
 		public final LaneLine[] lanelines;
-		public Road(float x1, float y1, float x2, float y2, float width, LaneLine... lanes){
+		public Road(float x1, float y1, float x2, float y2, float width, LaneLine[] lanes, ArrayList<Vec2> controls){
 			this.x1 = x1;
 			this.x2 = x2;
 			this.y1 = y1;
@@ -19,6 +22,7 @@ class MapStructures {
 			perp.scale(1/length);
 			perp.transform(new Matrix2(0,-1,1,0));
 			lanelines = lanes;
+			controlPoints = controls;
 		}
 	}
 	
