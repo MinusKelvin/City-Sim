@@ -47,7 +47,7 @@ public class Chunk {
 					float y1 = s.nextFloat();
 					String in = s.next();
 					ArrayList<Vec2> controls = new ArrayList<>();
-					while (in.equals("CP")) {
+					while (in.equals("CURVEPOINT")) {
 						controls.add(new Vec2(s.nextFloat(), s.nextFloat()));
 						in = s.next();
 					}
