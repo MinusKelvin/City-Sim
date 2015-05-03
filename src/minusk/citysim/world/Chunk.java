@@ -45,7 +45,14 @@ public class Chunk {
 				case "ROAD":
 					float x1 = s.nextFloat();
 					float y1 = s.nextFloat();
+					float idirx = Float.NaN;
+					float idiry = Float.NaN;
 					String in = s.next();
+					if (in.equals("DIR")) {
+						idirx = s.nextFloat();
+						idiry = s.nextFloat();
+						in = s.next();
+					}
 					ArrayList<Vec2> controls = new ArrayList<>();
 					while (in.equals("CURVEPOINT")) {
 						controls.add(new Vec2(s.nextFloat(), s.nextFloat()));
@@ -55,9 +62,10 @@ public class Chunk {
 					float y2 = s.nextFloat();
 					float width = s.nextFloat();
 					MapStructures.LaneLine[] lanes = new MapStructures.LaneLine[s.nextInt()];
+					float[] dists = new float[lanes.length];
 					for (int i = 0; i < lanes.length; i++)
 						lanes[i] = new MapStructures.LaneLine(s.nextFloat(), s.next());
-					roads.add(new MapStructures.Road(x1,y1,x2,y2,width,lanes,controls));
+					roads.add(new MapStructures.Road(x1,y1,idirx,idiry,x2,y2,width,lanes,dists,controls));
 					break;
 				}
 			}

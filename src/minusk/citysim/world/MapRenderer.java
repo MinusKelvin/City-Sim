@@ -6,6 +6,9 @@ package minusk.citysim.world;
 //import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 //import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static java.lang.Math.round;
+
+import java.util.Arrays;
+
 import minusk.citysim.world.MapStructures.LaneLine;
 import minusk.render.graphics.Color;
 import minusk.render.graphics.OrthoCamera;
@@ -32,12 +35,12 @@ class MapRenderer {
 	}
 	
 	public void drawRoad(MapStructures.Road road) {
-		Vec2 thing = new Vec2(road.perp);
-		thing.scale(road.width/2);
-		
-		if (road.controlPoints.size() == 0)
-			drawRoadBit(new Vec2(road.x1,road.y1),new Vec2(road.x2,road.y2),thing,0,road);
-		else {
+		if (road.controlPoints.size() == 0) {
+			Vec2 thing = new Vec2(road.perp);
+			thing.scale(road.width/2);
+			drawRoadBit(new Vec2(road.x1,road.y1),new Vec2(road.x2,road.y2),thing,
+					Arrays.copyOf(road.laneDistances, road.laneDistances.length),road);
+		} else {
 			float STEP = 1f/128;
 			Vec2[] controls = new Vec2[road.controlPoints.size()+2];
 			controls[0] = new Vec2(road.x1, road.y1);
@@ -45,23 +48,25 @@ class MapRenderer {
 				controls[i] = road.controlPoints.get(i-1);
 			controls[road.controlPoints.size()+1] = new Vec2(road.x2,road.y2);
 			
-			float m = 0;
-			Vec2 dir = Easing.bezier(controls, STEP);
-			dir.sub(Easing.bezier(controls, 0));
-			dir.normalize();
+			Vec2 dir;
+			if (Float.isNaN(road.initialDirectionX)) {
+				dir = Easing.bezier(controls, STEP);
+				dir.sub(Easing.bezier(controls, 0));
+				dir.normalize();
+			} else
+				dir = new Vec2(road.initialDirectionX, road.initialDirectionY);
 			dir.transform(new Matrix2(0,-1,1,0));
 			dir.scale(road.width/2);
 			
+			float[] perlaneDistances = Arrays.copyOf(road.laneDistances, road.laneDistances.length);
 			for (float t = 0; t < 1; t+=STEP) {
 				Vec2 p1 = Easing.bezier(controls, t);
 				Vec2 p2 = Easing.bezier(controls, t+STEP);
-				m += drawRoadBit(p1, p2, dir, m, road);
+				drawRoadBit(p1, p2, dir, perlaneDistances, road);
 			}
 		}
 
-		thing.scale(2/road.width);
 		for (MapStructures.LaneLine l : road.lanelines) {
-			Vec2 offset = new Vec2(thing);
 			switch (l.type) {
 //			case MEDIUM_DOTTED_WHITE:
 //			{
@@ -130,7 +135,7 @@ class MapRenderer {
 		}
 	}
 	
-	private float drawRoadBit(Vec2 start, Vec2 end, Vec2 oldDir, float m, MapStructures.Road road) {
+	private void drawRoadBit(Vec2 start, Vec2 end, Vec2 oldDir, float[] distances, MapStructures.Road road) {
 		float x1 = start.x + oldDir.x;
 		float y1 = start.y + oldDir.y;
 
@@ -140,7 +145,6 @@ class MapRenderer {
 		Vec2 olderDir = new Vec2(oldDir);
 		oldDir.set(end);
 		oldDir.sub(start);
-		float inc = oldDir.length();
 		oldDir.normalize();
 		oldDir.transform(new Matrix2(0,-1,1,0));
 		oldDir.scale(road.width/2);
@@ -156,21 +160,29 @@ class MapRenderer {
 		
 		oldDir.scale(2/road.width);
 		olderDir.scale(2/road.width);
-		for (LaneLine l : road.lanelines) {
+		for (int i = 0; i < road.lanelines.length; i++) {
 			Vec2 offsetstart = new Vec2(olderDir);
 			Vec2 offsetend = new Vec2(oldDir);
+			LaneLine l = road.lanelines[i];
+			float m = distances[i];
+			offsetstart.scale(l.offsetFromMiddle);
+			offsetend.scale(l.offsetFromMiddle);
+			
+			Vec2 temp = new Vec2(offsetend);
+			temp.add(end);
+			Vec2 temp2 = new Vec2(offsetstart);
+			temp2.add(start);
+			temp.sub(temp2);
+			float inc = temp.length();
+			temp.scale(1/inc);
+			
 			switch (l.type) {
 			case SOLID_WHITE:
-				offsetstart.scale(l.offsetFromMiddle);
-				offsetend.scale(l.offsetFromMiddle);
 				colorPass.drawLine(start.x+offsetstart.x, start.y+offsetstart.y, end.x+offsetend.x, end.y+offsetend.y, 0.1f, Color.Gray87);
 				break;
 			case LONG_DOTTED_WHITE:
 			{
-				offsetstart.scale(l.offsetFromMiddle);
-				offsetend.scale(l.offsetFromMiddle);
-				Vec2 roadDir = new Vec2(oldDir);
-				roadDir.transform(new Matrix2(0, 1, -1, 0));
+				Vec2 roadDir = new Vec2(temp);
 				
 				float off = 0;
 				float enddist = m+inc;
@@ -256,9 +268,9 @@ class MapRenderer {
 			default:
 				break;
 			}
+			distances[i] += inc;
 		}
 		oldDir.scale(road.width/2);
-		return inc;
 	}
 	
 	void begin() {
