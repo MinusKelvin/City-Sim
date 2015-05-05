@@ -60,12 +60,21 @@ public class Chunk {
 					}
 					float x2 = Float.parseFloat(in);
 					float y2 = s.nextFloat();
-					float width = s.nextFloat();
+					in = s.next();
+					float endx = Float.NaN;
+					float endy = Float.NaN;
+					if (in.equals("DIR")) {
+						endx = s.nextFloat();
+						endy = s.nextFloat();
+						in = s.next();
+					}
+					float width = Float.parseFloat(in);
 					MapStructures.LaneLine[] lanes = new MapStructures.LaneLine[s.nextInt()];
 					float[] dists = new float[lanes.length];
 					for (int i = 0; i < lanes.length; i++)
 						lanes[i] = new MapStructures.LaneLine(s.nextFloat(), s.next());
-					roads.add(new MapStructures.Road(x1,y1,idirx,idiry,x2,y2,width,lanes,dists,controls));
+					roads.add(new MapStructures.Road(x1,y1,idirx!=idirx?null:new Vec2(idirx,idiry),
+							x2,y2,endx!=endx?null:new Vec2(endx,endy),width,lanes,dists,controls));
 					break;
 				}
 			}

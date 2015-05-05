@@ -39,7 +39,7 @@ class MapRenderer {
 			Vec2 thing = new Vec2(road.perp);
 			thing.scale(road.width/2);
 			drawRoadBit(new Vec2(road.x1,road.y1),new Vec2(road.x2,road.y2),thing,
-					Arrays.copyOf(road.laneDistances, road.laneDistances.length),road);
+					Arrays.copyOf(road.laneDistances, road.laneDistances.length),road,null);
 		} else {
 			float STEP = 1f/128;
 			Vec2[] controls = new Vec2[road.controlPoints.size()+2];
@@ -49,20 +49,21 @@ class MapRenderer {
 			controls[road.controlPoints.size()+1] = new Vec2(road.x2,road.y2);
 			
 			Vec2 dir;
-			if (Float.isNaN(road.initialDirectionX)) {
+			if (road.initialDirection == null) {
 				dir = Easing.bezier(controls, STEP);
-				dir.sub(Easing.bezier(controls, 0));
+				dir.sub(controls[0]);
 				dir.normalize();
 			} else
-				dir = new Vec2(road.initialDirectionX, road.initialDirectionY);
+				dir = new Vec2(road.initialDirection);
 			dir.transform(new Matrix2(0,-1,1,0));
 			dir.scale(road.width/2);
 			
 			float[] perlaneDistances = Arrays.copyOf(road.laneDistances, road.laneDistances.length);
 			for (float t = 0; t < 1; t+=STEP) {
 				Vec2 p1 = Easing.bezier(controls, t);
-				Vec2 p2 = Easing.bezier(controls, t+STEP);
-				drawRoadBit(p1, p2, dir, perlaneDistances, road);
+				Vec2 p2 = Easing.bezier(controls, Math.min(1, t+STEP));
+				drawRoadBit(p1, p2, dir, perlaneDistances, road,
+						t+STEP>=1&&road.endDirection!=null?new Vec2(road.endDirection):null);
 			}
 		}
 
@@ -135,7 +136,7 @@ class MapRenderer {
 		}
 	}
 	
-	private void drawRoadBit(Vec2 start, Vec2 end, Vec2 oldDir, float[] distances, MapStructures.Road road) {
+	private void drawRoadBit(Vec2 start, Vec2 end, Vec2 oldDir, float[] distances, MapStructures.Road road, Vec2 newDirOverride) {
 		float x1 = start.x + oldDir.x;
 		float y1 = start.y + oldDir.y;
 
@@ -143,9 +144,12 @@ class MapRenderer {
 		float y2 = start.y - oldDir.y;
 		
 		Vec2 olderDir = new Vec2(oldDir);
-		oldDir.set(end);
-		oldDir.sub(start);
-		oldDir.normalize();
+		if (newDirOverride == null) {
+			oldDir.set(end);
+			oldDir.sub(start);
+			oldDir.normalize();
+		} else
+			oldDir.set(newDirOverride);
 		oldDir.transform(new Matrix2(0,-1,1,0));
 		oldDir.scale(road.width/2);
 		
