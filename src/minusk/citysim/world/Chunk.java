@@ -13,6 +13,7 @@ public class Chunk {
 	public final boolean useable;
 	public final int x,y;
 	private final ArrayList<MapStructures.Road> roads = new ArrayList<>();
+	private boolean outputRoadInformation = true;
 	
 	public Chunk(int x, int y) {
 		this.x = x;
@@ -97,7 +98,13 @@ public class Chunk {
 		if (!useable)
 			return;
 		
-		for (MapStructures.Road r : roads)
-			renderer.drawRoad(r);
+		if (outputRoadInformation)
+			System.out.println("Chunk " + x + ", " + y);
+		for (int i = 0; i < roads.size(); i++) {
+			if (outputRoadInformation)
+				System.out.println("Road number " + i);
+			renderer.drawRoad(roads.get(i),outputRoadInformation);
+		}
+		outputRoadInformation = false;
 	}
 }

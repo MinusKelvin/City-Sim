@@ -34,12 +34,20 @@ class MapRenderer {
 		colorPass.camera = camera;
 	}
 	
-	public void drawRoad(MapStructures.Road road) {
+	public void drawRoad(MapStructures.Road road, boolean outputInfo) {
 		if (road.controlPoints.size() == 0) {
 			Vec2 thing = new Vec2(road.perp);
 			thing.scale(road.width/2);
+			float[] dists = Arrays.copyOf(road.laneDistances, road.laneDistances.length);
 			drawRoadBit(new Vec2(road.x1,road.y1),new Vec2(road.x2,road.y2),thing,
-					Arrays.copyOf(road.laneDistances, road.laneDistances.length),road,null);
+					dists,road,null);
+			thing.scale(2/road.width);
+			thing.transform(new Matrix2(0, 1, -1, 0));
+			if (outputInfo) {
+				System.out.println("Road direction: " + thing.x + ", " + thing.y);
+				for (int i = 0; i < dists.length; i++)
+					System.out.println("Road laneline distance " + i + ": " + dists[i]);
+			}
 		} else {
 			float STEP = 1f/128;
 			Vec2[] controls = new Vec2[road.controlPoints.size()+2];
@@ -64,6 +72,13 @@ class MapRenderer {
 				Vec2 p2 = Easing.bezier(controls, Math.min(1, t+STEP));
 				drawRoadBit(p1, p2, dir, perlaneDistances, road,
 						t+STEP>=1&&road.endDirection!=null?new Vec2(road.endDirection):null);
+			}
+			dir.scale(2/road.width);
+			dir.transform(new Matrix2(0, 1, -1, 0));
+			if (outputInfo) {
+				System.out.println("Road direction: " + dir.x + ", " + dir.y);
+				for (int i = 0; i < perlaneDistances.length; i++)
+					System.out.println("Road laneline distance " + i + ": " + perlaneDistances[i]);
 			}
 		}
 
