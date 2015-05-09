@@ -21,8 +21,9 @@ import minusk.render.math.Vec2;
 class MapRenderer {
 	private TextureDrawPass roadPass;
 	private ColorDrawPass colorPass;
+	private int x,y;
 	
-	OrthoCamera camera = new OrthoCamera(0,1024/16f,576/16f,0);
+	OrthoCamera camera = new OrthoCamera(-1024/32f,1024/32f,576/32f,-576/32f);
 	
 	MapRenderer() {
 		Texture roadTex = new Texture(128,128,1,false);
@@ -80,64 +81,6 @@ class MapRenderer {
 					System.out.println("Road laneline distance " + i + ": " + perlaneDistances[i]);
 			}
 		}
-
-		for (MapStructures.LaneLine l : road.lanelines) {
-			switch (l.type) {
-//			case SHORT_DOTTED_WHITE:
-//			{
-//				offset.scale(l.offsetFromMiddle);
-//				Vec2 roadDir = new Vec2(road.perp);
-//				roadDir.transform(new Matrix2(0, 1, -1, 0));
-//				for (int m = 0; m < road.length; m += 2)
-//					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
-//							road.x1+(roadDir.x*(m+1))+offset.x, road.y1+(roadDir.y*(m+1))+offset.y, 0.1f, Color.Gray87);
-//				break;
-//			}
-//			case SOLID_YELLOW:
-//				offset.scale(l.offsetFromMiddle);
-//				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			case SOLID_SOLID_YELLOW:
-//			{
-//				Vec2 f = new Vec2(offset);
-//				offset.scale(l.offsetFromMiddle-0.1f);
-//				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				f.scale(l.offsetFromMiddle+0.1f);
-//				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			}
-//			case SOLID_DOTTED_YELLOW:
-//			{
-//				Vec2 f = new Vec2(offset);
-//				offset.scale(l.offsetFromMiddle-0.1f);
-//				Vec2 roadDir = new Vec2(road.perp);
-//				roadDir.transform(new Matrix2(0, 1, -1, 0));
-//				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				f.scale(l.offsetFromMiddle+0.1f);
-//				for (int m = 0; m < road.length; m += 5)
-//					colorPass.drawLine(road.x1+(roadDir.x*m)+f.x, road.y1+(roadDir.y*m)+f.y,
-//							road.x1+(roadDir.x*(m+2))+f.x, road.y1+(roadDir.y*(m+2))+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			}
-//			case DOTTED_SOLID_YELLOW:
-//			{
-//				Vec2 f = new Vec2(offset);
-//				offset.scale(l.offsetFromMiddle-0.1f);
-//				Vec2 roadDir = new Vec2(road.perp);
-//				roadDir.transform(new Matrix2(0, 1, -1, 0));
-//				for (int m = 0; m < road.length; m += 5)
-//					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
-//							road.x1+(roadDir.x*(m+2))+offset.x, road.y1+(roadDir.y*(m+2))+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				f.scale(l.offsetFromMiddle+0.1f);
-//				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			}
-//			case DOTTED_YELLOW:
-//				break;
-			default:
-				break;
-			}
-		}
 	}
 	
 	private void drawRoadBit(Vec2 start, Vec2 end, Vec2 oldDir, float[] distances, MapStructures.Road road, Vec2 newDirOverride) {
@@ -163,8 +106,8 @@ class MapRenderer {
 		float x4 = end.x - oldDir.x;
 		float y4 = end.y - oldDir.y;
 
-		roadPass.drawTriangle(x1, y1, x1/8, y1/8, x2, y2, x2/8, y2/8, x3, y3, x3/8, y3/8);
-		roadPass.drawTriangle(x4, y4, x4/8, y4/8, x2, y2, x2/8, y2/8, x3, y3, x3/8, y3/8);
+		roadPass.drawTriangle(x1+x, y1+y, x1/8+x, y1/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y);
+		roadPass.drawTriangle(x4+x, y4+y, x4/8+x, y4/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y);
 		
 		oldDir.scale(2/road.width);
 		olderDir.scale(2/road.width);
@@ -186,7 +129,7 @@ class MapRenderer {
 			
 			switch (l.type) {
 			case SOLID_WHITE:
-				colorPass.drawLine(start.x+offsetstart.x, start.y+offsetstart.y, end.x+offsetend.x, end.y+offsetend.y, 0.1f, Color.Gray87);
+				colorPass.drawLine(start.x+offsetstart.x+x, start.y+offsetstart.y+y, end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
 				break;
 			case LONG_DOTTED_WHITE:
 			{
@@ -199,13 +142,13 @@ class MapRenderer {
 					if (linestartdist > enddist)
 						break;
 					if (enddist <= round(m/20+off,0.3f)*20+6) {
-						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m), start.y+offsetstart.y+roadDir.y*(linestartdist-m),
-								end.x+offsetend.x, end.y+offsetend.y, 0.1f, Color.Gray87);
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
 						break;
 					} else {
 						float lineenddist = round(m/20+off,0.3f)*20+6;
-						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m), start.y+offsetstart.y+roadDir.y*(linestartdist-m),
-								start.x+offsetstart.x+roadDir.x*(lineenddist-m), start.y+offsetstart.y+roadDir.y*(lineenddist-m), 0.1f, Color.Gray87);
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, Color.Gray87);
 					}
 					off++;
 				}
@@ -223,70 +166,71 @@ class MapRenderer {
 					if (linestartdist > enddist)
 						break;
 					if (enddist <= round(m/14+off,0.28f)*14+4) {
-						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m), start.y+offsetstart.y+roadDir.y*(linestartdist-m),
-								end.x+offsetend.x, end.y+offsetend.y, 0.1f, Color.Gray87);
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
 						break;
 					} else {
 						float lineenddist = round(m/14+off,0.28f)*14+4;
-						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m), start.y+offsetstart.y+roadDir.y*(linestartdist-m),
-								start.x+offsetstart.x+roadDir.x*(lineenddist-m), start.y+offsetstart.y+roadDir.y*(lineenddist-m), 0.1f, Color.Gray87);
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, Color.Gray87);
 					}
 					off++;
 				}
 
 				break;
 			}
-//			case SHORT_DOTTED_WHITE:
-//			{
-//				offset.scale(l.offsetFromMiddle);
-//				Vec2 roadDir = new Vec2(road.perp);
-//				roadDir.transform(new Matrix2(0, 1, -1, 0));
-//				for (int m = 0; m < road.length; m += 2)
-//					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
-//							road.x1+(roadDir.x*(m+1))+offset.x, road.y1+(roadDir.y*(m+1))+offset.y, 0.1f, Color.Gray87);
-//				break;
-//			}
-//			case SOLID_YELLOW:
-//				offset.scale(l.offsetFromMiddle);
-//				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			case SOLID_SOLID_YELLOW:
-//			{
-//				Vec2 f = new Vec2(offset);
-//				offset.scale(l.offsetFromMiddle-0.1f);
-//				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				f.scale(l.offsetFromMiddle+0.1f);
-//				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			}
-//			case SOLID_DOTTED_YELLOW:
-//			{
-//				Vec2 f = new Vec2(offset);
-//				offset.scale(l.offsetFromMiddle-0.1f);
-//				Vec2 roadDir = new Vec2(road.perp);
-//				roadDir.transform(new Matrix2(0, 1, -1, 0));
-//				colorPass.drawLine(road.x1+offset.x, road.y1+offset.y, road.x2+offset.x, road.y2+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				f.scale(l.offsetFromMiddle+0.1f);
-//				for (int m = 0; m < road.length; m += 5)
-//					colorPass.drawLine(road.x1+(roadDir.x*m)+f.x, road.y1+(roadDir.y*m)+f.y,
-//							road.x1+(roadDir.x*(m+2))+f.x, road.y1+(roadDir.y*(m+2))+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			}
-//			case DOTTED_SOLID_YELLOW:
-//			{
-//				Vec2 f = new Vec2(offset);
-//				offset.scale(l.offsetFromMiddle-0.1f);
-//				Vec2 roadDir = new Vec2(road.perp);
-//				roadDir.transform(new Matrix2(0, 1, -1, 0));
-//				for (int m = 0; m < road.length; m += 5)
-//					colorPass.drawLine(road.x1+(roadDir.x*m)+offset.x, road.y1+(roadDir.y*m)+offset.y,
-//							road.x1+(roadDir.x*(m+2))+offset.x, road.y1+(roadDir.y*(m+2))+offset.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				f.scale(l.offsetFromMiddle+0.1f);
-//				colorPass.drawLine(road.x1+f.x, road.y1+f.y, road.x2+f.x, road.y2+f.y, 0.1f, new Color(0.87f, 0.75f, 0));
-//				break;
-//			}
-//			case DOTTED_YELLOW:
-//				break;
+			case SHORT_DOTTED_WHITE:
+			{
+				Vec2 roadDir = new Vec2(temp);
+
+				float off = 0;
+				float enddist = m+inc;
+				while (true) {
+					float linestartdist = Math.max(m, round(m/5+off,0.3f)*5);
+					if (linestartdist > enddist)
+						break;
+					if (enddist <= round(m/5+off,0.3f)*5+1.5f) {
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+						break;
+					} else {
+						float lineenddist = round(m/5+off,0.3f)*5+1.5f;
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, Color.Gray87);
+					}
+					off++;
+				}
+
+				break;
+			}
+			case SOLID_YELLOW:
+				colorPass.drawLine(start.x+offsetstart.x+x, start.y+offsetstart.y+y, end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, new Color(0.87f, 0.75f, 0));
+				break;
+			case DOTTED_YELLOW:
+			{
+				Vec2 roadDir = new Vec2(temp);
+
+				float off = 0;
+				float enddist = m+inc;
+				while (true) {
+					float linestartdist = Math.max(m, round(m/14+off,0.28f)*14);
+					if (linestartdist > enddist)
+						break;
+					if (enddist <= round(m/14+off,0.28f)*14+4) {
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+						break;
+					} else {
+						float lineenddist = round(m/14+off,0.28f)*14+4;
+						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y,
+								0.1f, new Color(0.87f, 0.75f, 0));
+					}
+					off++;
+				}
+
+				break;
+			}
 			default:
 				break;
 			}
@@ -307,5 +251,10 @@ class MapRenderer {
 	
 	private static int round(float f, float half) {
 		return (int) Math.floor(f + (1-half));
+	}
+	
+	public void setChunkOffset(int x, int y) {
+		this.x = x*100;
+		this.y = y*100;
 	}
 }
