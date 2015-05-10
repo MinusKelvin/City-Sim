@@ -18,7 +18,7 @@ public class Car extends Entity {
 	private Body chassis, tire0, tire1, tire2, tire3;
 	private float[] prevTurning = new float[10];
 	private float turning = 0, enginePower = 0;
-	private boolean skidding0, skidding1, skidding2, skidding3;
+	private boolean skidding0, skidding1, skidding2, skidding3, handbrakeApplied;
 	
 	public Car() {
 		// Chassis
@@ -46,6 +46,7 @@ public class Car extends Entity {
 		shape.setAsBox(0.125f, 0.375f);
 		fDef.shape = shape;
 		fDef.density = 240;
+		fDef.filter.maskBits = 0;
 		tire0.createFixture(fDef);
 		rjDef.bodyB = tire0;
 		rjDef.localAnchorA.x = -0.775f;
@@ -117,8 +118,21 @@ public class Car extends Entity {
 	}
 	
 	private void recalcVel(Body tire, int val) {
-		Vec2 lateral = tire.getWorldVector(new Vec2(1, 0));
-		lateral.mulLocal(Vec2.dot(lateral, tire.getLinearVelocity()));
+		Vec2 lateral;
+		if (val > 1 && handbrakeApplied) {
+			lateral = new Vec2(tire.getLinearVelocity());
+			skidding2 = true;
+			skidding3 = true;
+		} else {
+			lateral = tire.getWorldVector(new Vec2(1, 0));
+			lateral.mulLocal(Vec2.dot(lateral, tire.getLinearVelocity()));
+			
+			Vec2 forward = tire.getWorldVector(new Vec2(0, 1));
+			forward.mulLocal(Vec2.dot(forward, tire.getLinearVelocity()));
+			float forwardSpeed = forward.normalize();
+			float drag = -2 * forwardSpeed * tire.getMass();
+			tire.applyForceToCenter(forward.mulLocal(drag));
+		}
 		if (lateral.length() > 2.5f) {
 			lateral.mulLocal(2.5f/lateral.length());
 			switch (val) {
@@ -127,7 +141,7 @@ public class Car extends Entity {
 			case 2: skidding2=true; break;
 			case 3: skidding3=true; break;
 			}
-		} else {
+		} else if (!(val > 1 && handbrakeApplied)) {
 			switch (val) {
 			case 0: skidding0=false; break;
 			case 1: skidding1=false; break;
@@ -163,6 +177,10 @@ public class Car extends Entity {
 	
 	public void drive(float power) {
 		enginePower = power;
+	}
+	
+	public void handbrake(boolean applied) {
+		handbrakeApplied = applied;
 	}
 	
 	public Body getChassis() {

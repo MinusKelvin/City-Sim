@@ -1,11 +1,15 @@
 package minusk.citysim.world;
 
+import static java.lang.Math.abs;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 
 import minusk.render.math.Vec2;
 
@@ -24,18 +28,17 @@ public class Chunk {
 		if (!f.isDirectory())
 			throw new IllegalStateException("/map/ is not a directory");
 		
-		f = new File("map/c"+Integer.toHexString(x).toUpperCase());
+		f = new File("map/c"+hex(x));
 		if (!f.exists() || !f.isDirectory()) {
 			useable = false;
-			System.err.println("Cannot find directory /map/c"+Integer.toHexString(x).toUpperCase());
+			System.err.println("Cannot find directory /map/c"+hex(x));
 			return;
 		}
 		
-		f = new File("map/c"+Integer.toHexString(x).toUpperCase()+"/c"+Integer.toHexString(y).toUpperCase()+".cnk");
+		f = new File("map/c"+hex(x)+"/c"+hex(y)+".cnk");
 		if (!f.exists() || !f.isFile()) {
 			useable = false;
-			System.err.println("Cannot find file /map/c"+Integer.toHexString(x).toUpperCase()+
-					"/c"+Integer.toHexString(y).toUpperCase()+".cnk");
+			System.err.println("Cannot find file /map/c"+hex(x)+"/c"+hex(y)+".cnk");
 			return;
 		}
 		
@@ -97,6 +100,7 @@ public class Chunk {
 	public void render(MapRenderer renderer) {
 		if (!useable)
 			return;
+		renderer.setChunkOffset(x, y);
 		
 		if (outputRoadInformation)
 			System.out.println("Chunk " + x + ", " + y);
@@ -106,5 +110,9 @@ public class Chunk {
 			renderer.drawRoad(roads.get(i),outputRoadInformation);
 		}
 		outputRoadInformation = false;
+	}
+	
+	private static String hex(int i) {
+		return (i<0?"-":"") + Integer.toHexString(Math.abs(i)).toUpperCase();
 	}
 }

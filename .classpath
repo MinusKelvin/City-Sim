@@ -2,12 +2,13 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="/Rendering-Engine/bin" sourcepath="/Rendering-Engine/src"/>
-	<classpathentry kind="lib" path="lib/jar/lwjgl.jar" sourcepath="lib/src.zip">
+	<classpathentry kind="lib" path="lib/lwjgl/jar/lwjgl.jar" sourcepath="lib/lwjgl/src.zip">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/City-Sim/lib/doc/javadoc.zip!/"/>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="City-Sim/lib/native"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/City-Sim/lib/lwjgl/doc/javadoc.zip!/"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="City-Sim/lib/lwjgl/native"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/jbox2d/jbox2d-library-2.3.1-SNAPSHOT.jar" sourcepath="lib/jbox2d/jbox2d-library-2.3.1-SNAPSHOT-sources.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Rendering-Engine"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,5 +1,6 @@
 package minusk.citysim;
 
+import minusk.citysim.entities.Car;
 import minusk.citysim.world.Map;
 import minusk.render.core.Game;
 import minusk.render.core.Input;
@@ -28,6 +29,7 @@ public class Main extends Game {
 	@Override
 	protected void initialize() {
 		map = new Map();
+		map.init();
 	}
 
 	@Override
@@ -37,6 +39,10 @@ public class Main extends Game {
 	
 	public Input getInput() {
 		return window.input;
+	}
+	
+	public Map getMap() {
+		return map;
 	}
 	
 	public static void main(String[] args) {

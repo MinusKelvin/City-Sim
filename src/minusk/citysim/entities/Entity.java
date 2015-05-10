@@ -1,5 +1,7 @@
 package minusk.citysim.entities;
 
-public class Entity {
+import minusk.render.interfaces.Updateable;
 
+public abstract class Entity implements Updateable {
+	
 }
