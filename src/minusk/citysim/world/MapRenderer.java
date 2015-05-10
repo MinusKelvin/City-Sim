@@ -8,6 +8,8 @@ package minusk.citysim.world;
 
 import java.util.Arrays;
 
+import javax.print.attribute.standard.MediaSize.Other;
+
 import minusk.citysim.world.MapStructures.LaneLine;
 import minusk.render.graphics.Color;
 import minusk.render.graphics.OrthoCamera;
@@ -245,6 +247,9 @@ class MapRenderer {
 	}
 	
 	void end(){
+		for (int i = (int) -camera.transY-50; i < -camera.transY+50; i++)
+			colorPass.drawLine(0, i, 100, i, 0.05f, Color.Gray50);
+		
 		roadPass.end();
 		colorPass.end();
 	}
