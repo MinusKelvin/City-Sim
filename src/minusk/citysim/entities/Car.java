@@ -17,7 +17,7 @@ import org.jbox2d.dynamics.joints.WeldJointDef;
 public class Car extends Entity {
 	private Body chassis, tire0, tire1, tire2, tire3;
 	private float[] prevTurning = new float[10];
-	private float turning = 0;
+	private float turning = 0, enginePower = 0;
 	private boolean skidding0, skidding1, skidding2, skidding3;
 	
 	public Car() {
@@ -102,6 +102,9 @@ public class Car extends Entity {
 		float angle = Util.sum(prevTurning) / prevTurning.length;
 		tire0.setTransform(tire0.getPosition(),angle*1/Math.max(tire0.getLinearVelocity().length()/10,1)+chassis.getAngle());
 		tire1.setTransform(tire1.getPosition(),angle*1/Math.max(tire1.getLinearVelocity().length()/10,1)+chassis.getAngle());
+		
+		tire0.applyForceToCenter(tire0.getWorldVector(new Vec2(0, 1)).mulLocal(enginePower));
+		tire1.applyForceToCenter(tire1.getWorldVector(new Vec2(0, 1)).mulLocal(enginePower));
 	
 		recalcVel(tire0,0);
 		recalcVel(tire1,1);
@@ -156,6 +159,10 @@ public class Car extends Entity {
 	
 	public void turn(float dir) {
 		turning = dir;
+	}
+	
+	public void drive(float power) {
+		enginePower = power;
 	}
 	
 	public Body getChassis() {
