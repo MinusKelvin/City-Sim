@@ -8,6 +8,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
 
 import minusk.citysim.Main;
 import minusk.citysim.entities.Car;
+import minusk.citysim.entities.Car.CarDef;
+import minusk.citysim.entities.Car.TireDef;
 import minusk.citysim.entities.Entity;
 import minusk.render.graphics.draw.SpriteDrawPass;
 
@@ -17,7 +19,35 @@ public class Player extends Entity {
 	private Car car;
 	
 	public void init() {
-		car = new Car();
+		CarDef def = new CarDef();
+		def.acceleration = 28/6f;
+		def.height = 4.8f;
+		def.width = 1.9f;
+		def.tires = new TireDef[4];
+		def.tires[0] = new TireDef();
+		def.tires[0].canTurn = true;
+		def.tires[0].drive = 1;
+		def.tires[0].localx = .775f;
+		def.tires[0].localy = 1.5f;
+		def.tires[1] = new TireDef();
+		def.tires[1].canTurn = true;
+		def.tires[1].drive = 1;
+		def.tires[1].localx = -.775f;
+		def.tires[1].localy = 1.5f;
+		def.tires[2] = new TireDef();
+		def.tires[2].stoppedByHandbrake = true;
+		def.tires[2].drive = 0;
+		def.tires[2].localx = .775f;
+		def.tires[2].localy = -1.5f;
+		def.tires[3] = new TireDef();
+		def.tires[3].stoppedByHandbrake = true;
+		def.tires[3].drive = 0;
+		def.tires[3].localx = -.775f;
+		def.tires[3].localy = -1.5f;
+		def.topspeed = 55;
+		def.turnRadius = 0.6f;
+		def.mass = 1814;
+		car = new Car(def);
 	}
 	
 	@Override
@@ -27,18 +57,18 @@ public class Player extends Entity {
 		if (!Boolean.logicalXor(left, right))
 			car.turn(0);
 		else if (left)
-			car.turn(0.6f);
+			car.turn(1);
 		else
-			car.turn(-0.6f);
+			car.turn(-1);
 		
 		boolean forward = Main.game.getInput().isKeyDown(GLFW_KEY_W);
 		boolean backward = Main.game.getInput().isKeyDown(GLFW_KEY_S);
 		if (!Boolean.logicalXor(forward, backward))
 			car.drive(0);
 		else if (forward)
-			car.drive(7000);
+			car.drive(1);
 		else
-			car.drive(-5000);
+			car.drive(-0.8f);
 		
 		car.handbrake(Main.game.getInput().isKeyDown(GLFW_KEY_SPACE));
 		
