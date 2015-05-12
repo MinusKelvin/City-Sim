@@ -108,8 +108,8 @@ class MapRenderer {
 		float x4 = end.x - oldDir.x;
 		float y4 = end.y - oldDir.y;
 
-		roadPass.drawTriangle(x1+x, y1+y, x1/8+x, y1/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y);
-		roadPass.drawTriangle(x4+x, y4+y, x4/8+x, y4/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y);
+		roadPass.drawTriangle(x1+x, y1+y, x1/8+x, y1/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y, road.z);
+		roadPass.drawTriangle(x4+x, y4+y, x4/8+x, y4/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y, road.z);
 		
 		oldDir.scale(2/road.width);
 		olderDir.scale(2/road.width);
@@ -131,7 +131,7 @@ class MapRenderer {
 			
 			switch (l.type) {
 			case SOLID_WHITE:
-				colorPass.drawLine(start.x+offsetstart.x+x, start.y+offsetstart.y+y, end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+				colorPass.drawLine(start.x+offsetstart.x+x, start.y+offsetstart.y+y, end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, road.z, Color.Gray87);
 				break;
 			case LONG_DOTTED_WHITE:
 			{
@@ -145,12 +145,12 @@ class MapRenderer {
 						break;
 					if (enddist <= round(m/20+off,0.3f)*20+6) {
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, road.z, Color.Gray87);
 						break;
 					} else {
 						float lineenddist = round(m/20+off,0.3f)*20+6;
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, Color.Gray87);
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, road.z, Color.Gray87);
 					}
 					off++;
 				}
@@ -169,12 +169,12 @@ class MapRenderer {
 						break;
 					if (enddist <= round(m/14+off,0.28f)*14+4) {
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, road.z, Color.Gray87);
 						break;
 					} else {
 						float lineenddist = round(m/14+off,0.28f)*14+4;
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, Color.Gray87);
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, road.z, Color.Gray87);
 					}
 					off++;
 				}
@@ -193,12 +193,12 @@ class MapRenderer {
 						break;
 					if (enddist <= round(m/5+off,0.3f)*5+1.5f) {
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, road.z, Color.Gray87);
 						break;
 					} else {
 						float lineenddist = round(m/5+off,0.3f)*5+1.5f;
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, Color.Gray87);
+								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y, 0.1f, road.z, Color.Gray87);
 					}
 					off++;
 				}
@@ -206,7 +206,8 @@ class MapRenderer {
 				break;
 			}
 			case SOLID_YELLOW:
-				colorPass.drawLine(start.x+offsetstart.x+x, start.y+offsetstart.y+y, end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, new Color(0.87f, 0.75f, 0));
+				colorPass.drawLine(start.x+offsetstart.x+x, start.y+offsetstart.y+y,
+						end.x+offsetend.x+x,end.y+offsetend.y+y, 0.1f, road.z, new Color(0.87f, 0.75f, 0));
 				break;
 			case DOTTED_YELLOW:
 			{
@@ -220,13 +221,13 @@ class MapRenderer {
 						break;
 					if (enddist <= round(m/14+off,0.28f)*14+4) {
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
-								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, Color.Gray87);
+								end.x+offsetend.x+x, end.y+offsetend.y+y, 0.1f, road.z, Color.Gray87);
 						break;
 					} else {
 						float lineenddist = round(m/14+off,0.28f)*14+4;
 						colorPass.drawLine(start.x+offsetstart.x+roadDir.x*(linestartdist-m)+x, start.y+offsetstart.y+roadDir.y*(linestartdist-m)+y,
 								start.x+offsetstart.x+roadDir.x*(lineenddist-m)+x, start.y+offsetstart.y+roadDir.y*(lineenddist-m)+y,
-								0.1f, new Color(0.87f, 0.75f, 0));
+								0.1f, road.z, new Color(0.87f, 0.75f, 0));
 					}
 					off++;
 				}

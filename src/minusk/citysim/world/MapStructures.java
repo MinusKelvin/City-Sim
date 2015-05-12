@@ -7,14 +7,14 @@ import minusk.render.math.Vec2;
 
 class MapStructures {
 	public static final class Road {
-		public final float x1, y1, x2, y2, width, length;
+		public final float x1, y1, x2, y2, width, length, z;
 		public final float[] laneDistances;
 		public final Vec2 perp = new Vec2();
 		public final ArrayList<Vec2> controlPoints;
 		public final LaneLine[] lanelines;
 		public final Vec2 initialDirection, endDirection;
-		public Road(float x1, float y1, Vec2 idir, float x2,
-				float y2, Vec2 enddir, float width, LaneLine[] lanes, float[] laneDistances, ArrayList<Vec2> controls) {
+		public Road(float x1, float y1, Vec2 idir, float x2, float y2, Vec2 enddir, float width,
+				LaneLine[] lanes, float[] laneDistances, ArrayList<Vec2> controls, int layer) {
 			this.laneDistances = laneDistances;
 			this.x1 = x1;
 			this.x2 = x2;
@@ -29,6 +29,7 @@ class MapStructures {
 			controlPoints = controls;
 			initialDirection = idir;
 			endDirection = enddir;
+			z = layer;
 		}
 	}
 	

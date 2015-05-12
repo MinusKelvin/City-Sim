@@ -11,7 +11,6 @@ import minusk.citysim.Main;
 import minusk.render.math.Vec2;
 
 import org.jbox2d.collision.shapes.ChainShape;
-import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
@@ -56,6 +55,7 @@ public class Chunk {
 		FixtureDef fDef = new FixtureDef();
 		ChainShape shape = new ChainShape();
 		fDef.shape = shape;
+		int layer = 0;
 		
 		try (Scanner s = new Scanner(new BufferedInputStream(new FileInputStream(f)))) {
 			while (s.hasNext()) {
@@ -101,7 +101,7 @@ public class Chunk {
 						}
 					}
 					roads.add(new MapStructures.Road(x1,y1,idirx!=idirx?null:new Vec2(idirx,idiry),
-							x2,y2,endx!=endx?null:new Vec2(endx,endy),width,lanes,dists,controls));
+							x2,y2,endx!=endx?null:new Vec2(endx,endy),width,lanes,dists,controls, layer));
 					break;
 				}
 				case "WALL":
@@ -115,10 +115,12 @@ public class Chunk {
 						shape.createLoop(points, points.length);
 					else
 						shape.createChain(points, points.length);
-//					PolygonShape shape2 = new PolygonShape();
-//					shape2.setAsBox(0.01f, 100);
-//					fDef.shape = shape2;
 					barriers.createFixture(fDef);
+					break;
+				}
+				case "LAYER":
+				{
+					layer = s.nextInt();
 					break;
 				}
 				default:
