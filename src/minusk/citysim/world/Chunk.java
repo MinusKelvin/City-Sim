@@ -107,7 +107,7 @@ public class Chunk {
 				case "WALL":
 				{
 					String in = s.next();
-					boolean isloop = in.equals("OPEN");
+					boolean isloop = !in.equals("OPEN");
 					org.jbox2d.common.Vec2[] points = new org.jbox2d.common.Vec2[s.nextInt()];
 					for (int i = 0; i < points.length; i++)
 						points[i] = new org.jbox2d.common.Vec2(s.nextFloat(), s.nextFloat());
@@ -116,7 +116,7 @@ public class Chunk {
 					else
 						shape.createChain(points, points.length);
 //					PolygonShape shape2 = new PolygonShape();
-//					shape2.setAsBox(0.1f, 100);
+//					shape2.setAsBox(0.01f, 100);
 //					fDef.shape = shape2;
 					barriers.createFixture(fDef);
 					break;
