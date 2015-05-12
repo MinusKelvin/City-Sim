@@ -20,6 +20,7 @@ public class Car extends Entity {
 	private final float topspeed, turnRadius, force;
 	private final float[] prevTurning = new float[10], tireTraction, tireAccelerationCoefficents;
 	private final boolean[] tiresSkidding, tireCanBrake, tiresCanTurn;
+	private final Vec2[] tiresLocalPoints;
 	private float turning = 0, enginePower = 0;
 	private boolean handbrakeApplied;
 	
@@ -61,6 +62,7 @@ public class Car extends Entity {
 		tiresSkidding = new boolean[tires.length];
 		tireCanBrake = new boolean[tires.length];
 		tiresCanTurn = new boolean[tires.length];
+		tiresLocalPoints = new Vec2[tires.length];
 		
 		for (int i = 0; i < tires.length; i++) {
 			shape.setAsBox(carDef.tires[i].width/2, carDef.tires[i].height/2);
@@ -69,8 +71,10 @@ public class Car extends Entity {
 			
 			totalMass += carDef.tires[i].mass;
 			
-			bDef.position.x = carDef.x + carDef.tires[i].localx;
-			bDef.position.y = carDef.y + carDef.tires[i].localy;
+			tiresLocalPoints[i] = new Vec2(carDef.tires[i].localx, carDef.tires[i].localy);
+			
+			bDef.position.x = carDef.x + tiresLocalPoints[i].x;
+			bDef.position.y = carDef.y + tiresLocalPoints[i].y;
 			
 			tires[i] = Main.game.getMap().physics.createBody(bDef);
 			tires[i].createFixture(fDef);
@@ -112,7 +116,7 @@ public class Car extends Entity {
 		float angle = Util.sum(prevTurning) / prevTurning.length;
 		for (int i = 0; i < tires.length; i++) {
 			if (tiresCanTurn[i])
-				tires[i].setTransform(tires[i].getPosition(), angle*1/Math.max(tires[i].getLinearVelocity().length()/10,1)+chassis.getAngle());
+				tires[i].setTransform(chassis.getWorldPoint(tiresLocalPoints[i]), angle*1/Math.max(tires[i].getLinearVelocity().length()/10,1)+chassis.getAngle());
 			tires[i].applyForceToCenter(tires[i].getWorldVector(new Vec2(0, 1)).mulLocal(enginePower*tireAccelerationCoefficents[i]));
 		}
 		for (int i = 0; i < tires.length; i++)

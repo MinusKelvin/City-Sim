@@ -1,7 +1,5 @@
 package minusk.citysim.world;
 
-import static java.lang.Math.abs;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,15 +7,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
-
+import minusk.citysim.Main;
 import minusk.render.math.Vec2;
+
+import org.jbox2d.collision.shapes.ChainShape;
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.FixtureDef;
 
 public class Chunk {
 	public final boolean useable;
 	public final int x,y;
 	private final ArrayList<MapStructures.Road> roads = new ArrayList<>();
 	private boolean outputRoadInformation = true;
+	private Body barriers;
 	
 	public Chunk(int x, int y) {
 		this.x = x;
@@ -42,11 +47,22 @@ public class Chunk {
 			return;
 		}
 		
+		BodyDef def = new BodyDef();
+		def.position.x = x*100;
+		def.position.y = y*100;
+		def.type = BodyType.STATIC;
+		barriers = Main.game.getMap().physics.createBody(def);
+		
+		FixtureDef fDef = new FixtureDef();
+		ChainShape shape = new ChainShape();
+		fDef.shape = shape;
+		
 		try (Scanner s = new Scanner(new BufferedInputStream(new FileInputStream(f)))) {
 			while (s.hasNext()) {
 				String input = s.next();
 				switch (input) {
 				case "ROAD":
+				{
 					float x1 = s.nextFloat();
 					float y1 = s.nextFloat();
 					float idirx = Float.NaN;
@@ -86,6 +102,26 @@ public class Chunk {
 					}
 					roads.add(new MapStructures.Road(x1,y1,idirx!=idirx?null:new Vec2(idirx,idiry),
 							x2,y2,endx!=endx?null:new Vec2(endx,endy),width,lanes,dists,controls));
+					break;
+				}
+				case "WALL":
+				{
+					String in = s.next();
+					boolean isloop = in.equals("OPEN");
+					org.jbox2d.common.Vec2[] points = new org.jbox2d.common.Vec2[s.nextInt()];
+					for (int i = 0; i < points.length; i++)
+						points[i] = new org.jbox2d.common.Vec2(s.nextFloat(), s.nextFloat());
+					if (isloop)
+						shape.createLoop(points, points.length);
+					else
+						shape.createChain(points, points.length);
+//					PolygonShape shape2 = new PolygonShape();
+//					shape2.setAsBox(0.1f, 100);
+//					fDef.shape = shape2;
+					barriers.createFixture(fDef);
+					break;
+				}
+				default:
 					break;
 				}
 			}

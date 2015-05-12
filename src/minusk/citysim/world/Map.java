@@ -4,14 +4,14 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_Q;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
-import static org.lwjgl.system.MemoryUtil.NULL;
 
 import java.util.HashMap;
 
 import minusk.citysim.Main;
-import minusk.citysim.entities.Car;
 import minusk.citysim.entities.friendly.Player;
 import minusk.render.core.Input;
 import minusk.render.graphics.Color;
@@ -22,10 +22,18 @@ import minusk.render.graphics.globjects.SpriteSheet;
 import minusk.render.interfaces.Renderable;
 import minusk.render.interfaces.Updateable;
 
+import org.jbox2d.collision.shapes.ChainShape;
+import org.jbox2d.collision.shapes.CircleShape;
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.collision.shapes.Shape;
 import org.jbox2d.common.Vec2;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.Fixture;
+import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.joints.Joint;
-import org.jbox2d.dynamics.joints.JointDef;
 
 public class Map implements Renderable, Updateable {
 	public final World physics = new World(new Vec2());
@@ -37,7 +45,6 @@ public class Map implements Renderable, Updateable {
 	private MapRenderer renderer;
 	private SpriteDrawPass carDraws;
 	private ColorDrawPass debug;
-//	private Car c;
 	
 	public Map() {
 		renderer = new MapRenderer();
@@ -52,7 +59,6 @@ public class Map implements Renderable, Updateable {
 	
 	public void init() {
 		player.init();
-//		c = new Car();
 	}
 	
 	@Override
@@ -81,10 +87,20 @@ public class Map implements Renderable, Updateable {
 			map.put(new Point2I(cache), new Chunk(cache.x, cache.y));
 		
 		player.update();
-//		c.update();
+		
+		if (input.isKeyTapped(GLFW_KEY_Q)) {
+			BodyDef bodyDef = new BodyDef();
+			bodyDef.position.x = 0;
+			bodyDef.position.y = 50;
+			bodyDef.type = BodyType.DYNAMIC;
+			bodyDef.linearVelocity.x = -20;
+			PolygonShape circleShape = new PolygonShape();
+			circleShape.setAsBox(1, 1);
+			physics.createBody(bodyDef).createFixture(circleShape, 50);
+		}
 		
 		renderer.camera.roll = -player.getPhysicsObject().getTransform().q.getAngle();
-		physics.step(1/60f, 8, 3);
+		physics.step(1/60f, 20, 15);
 		renderer.camera.transX = -player.getPhysicsObject().getTransform().p.x;
 		renderer.camera.transY = -player.getPhysicsObject().getTransform().p.y;
 	}
@@ -98,7 +114,6 @@ public class Map implements Renderable, Updateable {
 		
 		carDraws.begin();
 		player.render(carDraws);
-//		c.render(carDraws);
 		carDraws.end();
 		debug.begin();
 		for (Joint joint = physics.getJointList(); joint != null; joint = joint.getNext()) {
@@ -106,7 +121,37 @@ public class Map implements Renderable, Updateable {
 			Vec2 vec2 = new Vec2();
 			joint.getAnchorA(vec1);
 			joint.getAnchorB(vec2);
-			debug.drawLine(vec1.x, vec1.y, vec2.x, vec2.y, 0.1f, Color.Green);
+			debug.drawLine(vec1.x, vec1.y, vec2.x, vec2.y, 0.01f, Color.Green);
+		}
+		for (Body body = physics.getBodyList(); body != null; body = body.getNext()) {
+			for (Fixture fixture = body.getFixtureList(); fixture != null; fixture = fixture.getNext()) {
+				Shape shape = fixture.getShape();
+				switch (shape.getType()) {
+				case CHAIN:
+					ChainShape c = (ChainShape) shape;
+					for (int i = 1; i < c.m_count; i++) {
+						Vec2 p1 = body.getWorldPoint(c.m_vertices[i-1]);
+						Vec2 p2 = body.getWorldPoint(c.m_vertices[i]);
+						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.01f, Color.Cyan);
+					}
+					break;
+				case CIRCLE:
+					break;
+				case EDGE:
+					break;
+				case POLYGON:
+					PolygonShape p = (PolygonShape) shape;
+					for (int i = 1; i < p.getVertexCount(); i++) {
+						Vec2 p1 = body.getWorldPoint(p.getVertices()[i-1]);
+						Vec2 p2 = body.getWorldPoint(p.getVertices()[i]);
+						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.01f, Color.Red);
+					}
+					Vec2 p1 = body.getWorldPoint(p.getVertices()[p.getVertexCount()-1]);
+					Vec2 p2 = body.getWorldPoint(p.getVertices()[0]);
+					debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.01f, Color.Red);
+					break;
+				}
+			}
 		}
 		debug.end();
 	}
