@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Scanner;
 
 import minusk.citysim.Main;
+import minusk.citysim.world.MapStructures.Road;
 import minusk.render.math.Vec2;
 
 import org.jbox2d.collision.shapes.ChainShape;
@@ -132,22 +134,48 @@ public class Chunk {
 			useable = false;
 			return;
 		}
+		roads.sort(new Comparator<MapStructures.Road>() {
+			@Override
+			public int compare(MapStructures.Road o1, MapStructures.Road o2) {
+				return (int) Math.signum(o1.z-o2.z);
+			}
+		});
 		useable = true;
 	}
 	
-	public void render(MapRenderer renderer) {
+	private int lastIndex;
+	private boolean doDraw = true;
+	public void render(MapRenderer renderer, int stage) {
 		if (!useable)
 			return;
+		
 		renderer.setChunkOffset(x, y);
+		
+		if (stage != -1) {
+			lastIndex = 0;
+			doDraw = true;
+		}
 		
 		if (outputRoadInformation)
 			System.out.println("Chunk " + x + ", " + y);
-		for (int i = 0; i < roads.size(); i++) {
-			if (outputRoadInformation)
-				System.out.println("Road number " + i);
-			renderer.drawRoad(roads.get(i),outputRoadInformation);
+		
+		if (doDraw) {
+			doDraw = false;
+			for (int i = lastIndex; i < roads.size(); i++) {
+				Road road = roads.get(i);
+				if (stage != -1 && stage < road.z) {
+					lastIndex = i;
+					doDraw = true;
+					break;
+				}
+				
+				if (outputRoadInformation)
+					System.out.println("Road number " + i);
+				
+				renderer.drawRoad(road,outputRoadInformation);
+			}
 		}
-		outputRoadInformation = false;
+		outputRoadInformation = stage != -1 && outputRoadInformation;
 	}
 	
 	private static String hex(int i) {

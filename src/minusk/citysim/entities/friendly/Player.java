@@ -11,8 +11,8 @@ import minusk.citysim.entities.Car;
 import minusk.citysim.entities.Car.CarDef;
 import minusk.citysim.entities.Car.TireDef;
 import minusk.citysim.entities.Entity;
-import minusk.render.graphics.draw.SpriteDrawPass;
 
+import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
 
 public class Player extends Entity {
@@ -78,11 +78,16 @@ public class Player extends Entity {
 		System.out.println("Speed: " + mps*3600/1000 + "km/h");
 	}
 	
-	public void render(SpriteDrawPass carDraws) {
-		car.render(carDraws);
+	public void render() {
+		car.render();
 	}
 	
 	public Body getPhysicsObject() {
 		return car.getChassis();
+	}
+	
+	@Override
+	public Vec2 getCenter() {
+		return car.getCenter();
 	}
 }

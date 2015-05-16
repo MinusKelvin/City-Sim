@@ -1,7 +1,9 @@
 package minusk.citysim.entities;
 
+import java.util.Arrays;
+
+import static java.lang.Math.incrementExact;
 import minusk.citysim.Main;
-import minusk.render.graphics.draw.SpriteDrawPass;
 import minusk.render.util.Util;
 
 import org.jbox2d.collision.shapes.PolygonShape;
@@ -17,7 +19,7 @@ import org.jbox2d.dynamics.joints.WeldJointDef;
 public class Car extends Entity {
 	private final Body chassis;
 	private final Body[] tires;
-	private final float topspeed, turnRadius, force;
+	private final float topspeed, turnRadius, force, totalMass;
 	private final float[] prevTurning = new float[10], tireTraction, tireAccelerationCoefficents;
 	private final boolean[] tiresSkidding, tireCanBrake, tiresCanTurn;
 	private final Vec2[] tiresLocalPoints;
@@ -98,6 +100,7 @@ public class Car extends Entity {
 		}
 		
 		force = totalMass * carDef.acceleration / Util.sum(tireAccelerationCoefficents);
+		this.totalMass = totalMass;
 	}
 	
 	@Override
@@ -140,8 +143,10 @@ public class Car extends Entity {
 			if (enginePower == 0) {
 				Vec2 forward = tire.getWorldVector(new Vec2(0, 1));
 				forward.mulLocal(Vec2.dot(forward, tire.getLinearVelocity()));
-				float forwardSpeed = forward.normalize();
-				float drag = -1 * forwardSpeed * tire.getMass();
+				float speed = forward.normalize();
+				float drag = -0.08f * Math.min(speed, 10) * totalMass;
+				if (speed < 0.5f)
+					drag = -speed * totalMass;
 				tire.applyForceToCenter(forward.mulLocal(drag));
 			}
 		}
@@ -155,20 +160,22 @@ public class Car extends Entity {
 		tire.applyLinearImpulse(lateral, tire.getWorldCenter(), true);
 	}
 
-	public void render(SpriteDrawPass carDraws) {
-		drawPoly(chassis, carDraws, false);
-		for (int i = 0; i < tires.length; i++)
-			drawPoly(tires[i], carDraws, tiresSkidding[i]);
-	}
-	
-	private void drawPoly(Body body, SpriteDrawPass carDraws, boolean highlight) {
-		Vec2[] verticies = ((PolygonShape)body.getFixtureList().getShape()).getVertices();
-		Vec2 p1 = Transform.mul(body.getTransform(),verticies[0]);
-		for (int i = 2; i < ((PolygonShape)body.getFixtureList().getShape()).getVertexCount(); i++) {
-			Vec2 p2 = Transform.mul(body.getTransform(),verticies[i-1]);
-			Vec2 p3 = Transform.mul(body.getTransform(),verticies[i]);
-			carDraws.drawTriangle(p1.x, p1.y, 0, 0, p2.x, p2.y, 0, 0, p3.x, p3.y, 0, 0, highlight?1:0);
-		}
+	public void render() {
+		Vec2[] vertices = Arrays.copyOf(((PolygonShape)chassis.getFixtureList().getShape()).getVertices(),
+				((PolygonShape)chassis.getFixtureList().getShape()).getVertexCount());
+		for (int i = 0; i < 4; i++)
+			vertices[i] = Transform.mul(chassis.getTransform(), vertices[i]);
+		
+		Main.game.getMap().getCarDrawer().drawTriangle(
+				vertices[0].x, vertices[0].y, 0, 1,
+				vertices[1].x, vertices[1].y, 1, 1,
+				vertices[2].x, vertices[2].y, 1, 0,
+				0, getLayer());
+		Main.game.getMap().getCarDrawer().drawTriangle(
+				vertices[0].x, vertices[0].y, 0, 1,
+				vertices[2].x, vertices[2].y, 1, 0,
+				vertices[3].x, vertices[3].y, 0, 0,
+				0, getLayer());
 	}
 	
 	public void turn(float dir) {
@@ -185,6 +192,11 @@ public class Car extends Entity {
 	
 	public Body getChassis() {
 		return chassis;
+	}
+	
+	@Override
+	public Vec2 getCenter() {
+		return chassis.getPosition();
 	}
 	
 	public static final class CarDef {

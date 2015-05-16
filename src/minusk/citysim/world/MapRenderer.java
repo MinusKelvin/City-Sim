@@ -1,15 +1,9 @@
 package minusk.citysim.world;
 
-//import static org.lwjgl.opengl.GL11.GL_REPEAT;
-//import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-//import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
-//import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
-//import static org.lwjgl.opengl.GL11.glTexParameteri;
 
 import java.util.Arrays;
 
-import javax.print.attribute.standard.MediaSize.Other;
-
+import minusk.citysim.Main;
 import minusk.citysim.world.MapStructures.LaneLine;
 import minusk.render.graphics.Color;
 import minusk.render.graphics.OrthoCamera;
@@ -25,15 +19,21 @@ class MapRenderer {
 	private ColorDrawPass colorPass;
 	private int x,y;
 	
-	OrthoCamera camera = new OrthoCamera(-1024/32f,1024/32f,576/32f,-576/32f);
+	OrthoCamera camera = new OrthoCamera(
+			-Main.game.getResolutionX()/32f,
+			Main.game.getResolutionX()/32f,
+			Main.game.getResolutionY()/32f,
+			-Main.game.getResolutionY()/32f);
 	
 	MapRenderer() {
-		Texture roadTex = new Texture(128,128,1,false);
+		Texture roadTex = new Texture(128,128,1,false,0);
 		roadTex.setTextureData(getClass().getResourceAsStream("/minusk/citysim/res/road.png"), 0);
 		roadPass = new TextureDrawPass(roadTex);
 		roadPass.camera = camera;
 		colorPass = new ColorDrawPass();
 		colorPass.camera = camera;
+		camera.near = 0;
+		camera.far = 15;
 	}
 	
 	public void drawRoad(MapStructures.Road road, boolean outputInfo) {
@@ -247,7 +247,7 @@ class MapRenderer {
 		colorPass.begin();
 	}
 	
-	void end(){
+	void end() {
 		for (int i = (int) -camera.transY-50; i < -camera.transY+50; i++)
 			colorPass.drawLine(0, i, 100, i, 0.05f, Color.Gray50);
 		

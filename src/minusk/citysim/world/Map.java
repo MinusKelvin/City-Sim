@@ -6,24 +6,36 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_Q;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
+import static org.lwjgl.opengl.GL11.glGetError;
+import static org.lwjgl.opengl.GL20.glGetUniformLocation;
+import static org.lwjgl.opengl.GL20.glUniform2f;
+import static org.lwjgl.opengl.GL20.glUniformMatrix4fv;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import minusk.citysim.Main;
+import minusk.citysim.entities.Entity;
 import minusk.citysim.entities.friendly.Player;
 import minusk.render.core.Input;
+import minusk.render.graphics.Camera;
 import minusk.render.graphics.Color;
 import minusk.render.graphics.draw.ColorDrawPass;
 import minusk.render.graphics.draw.SpriteDrawPass;
+import minusk.render.graphics.draw.TextureDrawPass;
 import minusk.render.graphics.filters.BlendFunc;
+import minusk.render.graphics.globjects.DepthStencilBuffer;
+import minusk.render.graphics.globjects.Framebuffer;
+import minusk.render.graphics.globjects.Shader;
 import minusk.render.graphics.globjects.SpriteSheet;
+import minusk.render.graphics.globjects.Texture;
 import minusk.render.interfaces.Renderable;
 import minusk.render.interfaces.Updateable;
+import minusk.render.math.Matrix4;
+import minusk.render.util.Util;
 
 import org.jbox2d.collision.shapes.ChainShape;
-import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.collision.shapes.Shape;
 import org.jbox2d.common.Vec2;
@@ -31,9 +43,9 @@ import org.jbox2d.dynamics.Body;
 import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.Fixture;
-import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.joints.Joint;
+import org.lwjgl.opengl.GLContext;
 
 public class Map implements Renderable, Updateable {
 	public final World physics = new World(new Vec2());
@@ -45,14 +57,44 @@ public class Map implements Renderable, Updateable {
 	private MapRenderer renderer;
 	private SpriteDrawPass carDraws;
 	private ColorDrawPass debug;
+	private Framebuffer above, below;
+	private Texture aboveTex, belowTex;
+	private TextureDrawPass abovePass,belowPass;
+	private ArrayList<Entity> entities = new ArrayList<>();
+	private Shader s;
+	private int playerPosLoc, transLoc;
 	
 	public Map() {
 		renderer = new MapRenderer();
+		
 		SpriteSheet sheet = new SpriteSheet(32, 64, 16, 1);
 		sheet.setSprites(getClass().getResourceAsStream("/minusk/citysim/res/cars.png"), 0, 0);
 		carDraws = new SpriteDrawPass(sheet);
 		carDraws.camera = renderer.camera;
 		carDraws.setBlendFunc(BlendFunc.TRANSPARENCY);
+		
+		DepthStencilBuffer buffer = new DepthStencilBuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
+		above = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
+		aboveTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false, 8);
+		above.attachTextures(aboveTex, 0, 0);
+		above.setDepthStencil(buffer);
+		
+		below = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
+		belowTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false, 8);
+		below.attachTextures(belowTex, 0, 0);
+		below.setDepthStencil(buffer);
+		
+		abovePass = new TextureDrawPass(aboveTex);
+		abovePass.setBlendFunc(BlendFunc.TRANSPARENCY);
+		s = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/passthrough.vs"),
+				getClass().getResourceAsStream("/minusk/citysim/res/alpha.fs"));
+		s.link();
+		s.use();
+		abovePass.setShader(s, glGetUniformLocation(s.id, "proj"));
+		belowPass = new TextureDrawPass(belowTex);
+		playerPosLoc = glGetUniformLocation(s.id, "ppos");
+		transLoc = glGetUniformLocation(s.id, "trans");
+		
 		debug = new ColorDrawPass();
 		debug.camera = renderer.camera;
 	}
@@ -107,21 +149,70 @@ public class Map implements Renderable, Updateable {
 	
 	@Override
 	public void render() {
+		below.use();
 		renderer.begin();
 		for (Chunk c : map.values())
-			c.render(renderer);
+			c.render(renderer, player.getLayer());
 		renderer.end();
 		
 		carDraws.begin();
-		player.render(carDraws);
+		
+		int lastindex = -1;
+		for (int i = 0; i < entities.size(); i++) {
+			Entity entity = entities.get(i);
+			if (entity.getLayer() > player.getLayer()) {
+				lastindex = i;
+				break;
+			}
+			entity.render();
+		}
+		player.render();
+		
 		carDraws.end();
+		
+		above.use();
+		
+		renderer.begin();
+		for (Chunk c : map.values())
+			c.render(renderer, -1);
+		renderer.end();
+		
+		carDraws.begin();
+		
+		if (lastindex != -1) {
+			for (int i = lastindex; i < entities.size(); i++) {
+				Entity entity = entities.get(i);
+				if (entity.getLayer() > player.getLayer()) {
+					lastindex = i;
+					break;
+				}
+				entity.render();
+			}
+		}
+		
+		carDraws.end();
+		
+		Framebuffer.useDefaultFramebuffer();
+		
+		belowPass.begin();
+		belowPass.drawRectangle(-1, -1, 0, 0, 1, 1, 1, 1);
+		belowPass.end();
+
+		s.use();
+		glUniform2f(playerPosLoc, 1, 1);
+		glUniform2f(transLoc, 1-renderer.camera.transX, 1-renderer.camera.transY);
+		
+		abovePass.begin();
+		abovePass.drawRectangle(-1, -1, 0, 0, 1, 1, 1, 1);
+		abovePass.end();
+		
 		debug.begin();
 		for (Joint joint = physics.getJointList(); joint != null; joint = joint.getNext()) {
 			Vec2 vec1 = new Vec2();
 			Vec2 vec2 = new Vec2();
 			joint.getAnchorA(vec1);
 			joint.getAnchorB(vec2);
-			debug.drawLine(vec1.x, vec1.y, vec2.x, vec2.y, 0.01f, Color.Green);
+			debug.drawLine(vec1.x, vec1.y, vec2.x, vec2.y, 0.05f, 15, Color.Green);
 		}
 		for (Body body = physics.getBodyList(); body != null; body = body.getNext()) {
 			for (Fixture fixture = body.getFixtureList(); fixture != null; fixture = fixture.getNext()) {
@@ -132,7 +223,7 @@ public class Map implements Renderable, Updateable {
 					for (int i = 1; i < c.m_count; i++) {
 						Vec2 p1 = body.getWorldPoint(c.m_vertices[i-1]);
 						Vec2 p2 = body.getWorldPoint(c.m_vertices[i]);
-						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.01f, Color.Cyan);
+						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.05f, 15, Color.Cyan);
 					}
 					break;
 				case CIRCLE:
@@ -144,16 +235,20 @@ public class Map implements Renderable, Updateable {
 					for (int i = 1; i < p.getVertexCount(); i++) {
 						Vec2 p1 = body.getWorldPoint(p.getVertices()[i-1]);
 						Vec2 p2 = body.getWorldPoint(p.getVertices()[i]);
-						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.01f, Color.Red);
+						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.05f, 15, Color.Red);
 					}
 					Vec2 p1 = body.getWorldPoint(p.getVertices()[p.getVertexCount()-1]);
 					Vec2 p2 = body.getWorldPoint(p.getVertices()[0]);
-					debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.01f, Color.Red);
+					debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.05f, 15, Color.Red);
 					break;
 				}
 			}
 		}
 		debug.end();
+	}
+	
+	public SpriteDrawPass getCarDrawer() {
+		return carDraws;
 	}
 	
 	private static class Point2I {

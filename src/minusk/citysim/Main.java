@@ -1,6 +1,9 @@
 package minusk.citysim;
 
-import minusk.citysim.entities.Car;
+import static org.lwjgl.opengl.GL11.glGetError;
+
+import org.lwjgl.opengl.GLContext;
+
 import minusk.citysim.world.Map;
 import minusk.render.core.Game;
 import minusk.render.core.Input;
@@ -11,7 +14,7 @@ public class Main extends Game {
 	private Map map;
 	
 	public Main() {
-		super(1024, 576, "City Simulator Thing", 8);
+		super(1280, 720, "City Simulator Thing", 8);
 	}
 
 	@Override
@@ -43,6 +46,14 @@ public class Main extends Game {
 	
 	public Map getMap() {
 		return map;
+	}
+	
+	public int getResolutionX() {
+		return window.input.getFramebufferWidth();
+	}
+	
+	public int getResolutionY() {
+		return window.input.getFramebufferHeight();
 	}
 	
 	public static void main(String[] args) {
