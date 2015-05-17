@@ -26,7 +26,7 @@ class MapRenderer {
 			-Main.game.getResolutionY()/32f);
 	
 	MapRenderer() {
-		Texture roadTex = new Texture(128,128,1,false,0);
+		Texture roadTex = new Texture(128,128,1,false);
 		roadTex.setTextureData(getClass().getResourceAsStream("/minusk/citysim/res/road.png"), 0);
 		roadPass = new TextureDrawPass(roadTex);
 		roadPass.camera = camera;

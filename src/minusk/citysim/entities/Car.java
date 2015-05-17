@@ -2,7 +2,6 @@ package minusk.citysim.entities;
 
 import java.util.Arrays;
 
-import static java.lang.Math.incrementExact;
 import minusk.citysim.Main;
 import minusk.render.util.Util;
 

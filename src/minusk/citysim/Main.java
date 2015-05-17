@@ -1,9 +1,5 @@
 package minusk.citysim;
 
-import static org.lwjgl.opengl.GL11.glGetError;
-
-import org.lwjgl.opengl.GLContext;
-
 import minusk.citysim.world.Map;
 import minusk.render.core.Game;
 import minusk.render.core.Input;

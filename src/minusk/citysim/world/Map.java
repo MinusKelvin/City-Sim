@@ -9,14 +9,12 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glGetError;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniform1i;
 import static org.lwjgl.opengl.GL20.glUniform2f;
-import static org.lwjgl.opengl.GL20.glUniformMatrix4fv;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,21 +23,19 @@ import minusk.citysim.Main;
 import minusk.citysim.entities.Entity;
 import minusk.citysim.entities.friendly.Player;
 import minusk.render.core.Input;
-import minusk.render.graphics.Camera;
 import minusk.render.graphics.Color;
 import minusk.render.graphics.draw.ColorDrawPass;
+import minusk.render.graphics.draw.MultisampledTextureDrawPass;
 import minusk.render.graphics.draw.SpriteDrawPass;
-import minusk.render.graphics.draw.TextureDrawPass;
 import minusk.render.graphics.filters.BlendFunc;
 import minusk.render.graphics.globjects.DepthStencilBuffer;
 import minusk.render.graphics.globjects.Framebuffer;
+import minusk.render.graphics.globjects.MultisampledTexture;
 import minusk.render.graphics.globjects.Shader;
 import minusk.render.graphics.globjects.SpriteSheet;
 import minusk.render.graphics.globjects.Texture;
 import minusk.render.interfaces.Renderable;
 import minusk.render.interfaces.Updateable;
-import minusk.render.math.Matrix4;
-import minusk.render.util.Util;
 
 import org.jbox2d.collision.shapes.ChainShape;
 import org.jbox2d.collision.shapes.PolygonShape;
@@ -51,7 +47,6 @@ import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.Fixture;
 import org.jbox2d.dynamics.World;
 import org.jbox2d.dynamics.joints.Joint;
-import org.lwjgl.opengl.GLContext;
 
 public class Map implements Renderable, Updateable {
 	public final World physics = new World(new Vec2());
@@ -64,8 +59,9 @@ public class Map implements Renderable, Updateable {
 	private SpriteDrawPass carDraws;
 	private ColorDrawPass debug, alphaPass;
 	private Framebuffer above, below, alpha;
-	private Texture aboveTex, belowTex, alphaTex;
-	private TextureDrawPass abovePass, belowPass;
+	private MultisampledTexture aboveTex, belowTex;
+	private Texture alphaTex;
+	private MultisampledTextureDrawPass abovePass, belowPass;
 	private ArrayList<Entity> entities = new ArrayList<>();
 	private Shader aboveShader, circleThingShader;
 	private int alphaLoc, pposLoc;
@@ -82,28 +78,28 @@ public class Map implements Renderable, Updateable {
 		
 		DepthStencilBuffer buffer = new DepthStencilBuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
 		above = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		aboveTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false, 8);
-		above.attachTextures(aboveTex, 0, 0);
+		aboveTex = new MultisampledTexture(Main.game.getResolutionX(), Main.game.getResolutionY(), 8, false);
+		above.attachTextures(aboveTex, 0);
 		above.setDepthStencil(buffer);
 		
 		below = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		belowTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false, 8);
-		below.attachTextures(belowTex, 0, 0);
+		belowTex = new MultisampledTexture(Main.game.getResolutionX(), Main.game.getResolutionY(), 8, false);
+		below.attachTextures(belowTex, 0);
 		below.setDepthStencil(buffer);
 		
 		alpha = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		alphaTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false, 0);
+		alphaTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false);
 		alpha.attachTextures(alphaTex, 0, 0);
 		alpha.setClearColor(new Color(1f, 0, 0));
 		
-		abovePass = new TextureDrawPass(aboveTex);
+		abovePass = new MultisampledTextureDrawPass(aboveTex);
 		abovePass.setBlendFunc(BlendFunc.TRANSPARENCY);
 		aboveShader = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/passthrough.vs"),
 				getClass().getResourceAsStream("/minusk/citysim/res/alpha.fs"));
 		aboveShader.link();
 		aboveShader.use();
-		abovePass.setShader(aboveShader, glGetUniformLocation(aboveShader.id, "proj"));
-		belowPass = new TextureDrawPass(belowTex);
+		abovePass.setShader(aboveShader, glGetUniformLocation(aboveShader.id, "proj"), glGetUniformLocation(aboveShader.id, "samples"));
+		belowPass = new MultisampledTextureDrawPass(belowTex);
 		alphaLoc = glGetUniformLocation(aboveShader.id, "alpha");
 		
 		alphaPass = new ColorDrawPass();
@@ -242,9 +238,9 @@ public class Map implements Renderable, Updateable {
 		alphaPass.end();
 		
 		Framebuffer.useDefaultFramebuffer();
-		
+
 		belowPass.begin();
-		belowPass.drawRectangle(-1, -1, 0, 0, 1, 1, 1, 1);
+		belowPass.drawRectangle(-1, -1, 0, 0, 1, 1, Main.game.getResolutionX(), Main.game.getResolutionY());
 		belowPass.end();
 
 		aboveShader.use();
@@ -254,7 +250,7 @@ public class Map implements Renderable, Updateable {
 		glActiveTexture(GL_TEXTURE0);
 		
 		abovePass.begin();
-		abovePass.drawRectangle(-1, -1, 0, 0, 1, 1, 1, 1);
+		abovePass.drawRectangle(-1, -1, 0, 0, 1, 1, Main.game.getResolutionX(), Main.game.getResolutionY());
 		abovePass.end();
 		
 		debug.begin();
