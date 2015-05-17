@@ -108,8 +108,12 @@ class MapRenderer {
 		float x4 = end.x - oldDir.x;
 		float y4 = end.y - oldDir.y;
 
-		roadPass.drawTriangle(x1+x, y1+y, x1/8+x, y1/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y, road.z);
-		roadPass.drawTriangle(x4+x, y4+y, x4/8+x, y4/8+y, x2+x, y2+y, x2/8+x, y2/8+y, x3+x, y3+y, x3/8+x, y3/8+y, road.z);
+		roadPass.drawTriangle(x1+x, y1+y, x1/8+x+road.z/8, y1/8+y+road.z/8,
+				x2+x, y2+y, x2/8+x+road.z/8, y2/8+y+road.z/8,
+				x3+x, y3+y, x3/8+x+road.z/8, y3/8+y+road.z/8, road.z);
+		roadPass.drawTriangle(x4+x, y4+y, x4/8+x+road.z/8, y4/8+y+road.z/8,
+				x2+x, y2+y, x2/8+x+road.z/8, y2/8+y+road.z/8,
+				x3+x, y3+y, x3/8+x+road.z/8, y3/8+y+road.z/8, road.z);
 		
 		oldDir.scale(2/road.width);
 		olderDir.scale(2/road.width);

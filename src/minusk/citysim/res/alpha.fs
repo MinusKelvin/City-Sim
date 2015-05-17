@@ -3,12 +3,11 @@
 in vec2 texcoord;
 
 uniform sampler2D tex;
-uniform vec2 ppos;
-uniform vec2 trans;
+uniform sampler2D alpha;
 
 out vec4 color;
 
 void main() {
 	color = texture(tex, texcoord);
-	color.a = length(ppos-trans);
+	color.a *= texture(alpha, texcoord).r;
 }

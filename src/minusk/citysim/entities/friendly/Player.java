@@ -2,6 +2,7 @@ package minusk.citysim.entities.friendly;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_A;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
@@ -11,6 +12,7 @@ import minusk.citysim.entities.Car;
 import minusk.citysim.entities.Car.CarDef;
 import minusk.citysim.entities.Car.TireDef;
 import minusk.citysim.entities.Entity;
+import minusk.render.core.Input;
 
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.Body;
@@ -52,17 +54,18 @@ public class Player extends Entity {
 	
 	@Override
 	public void update() {
-		boolean left = Main.game.getInput().isKeyDown(GLFW_KEY_A);
-		boolean right = Main.game.getInput().isKeyDown(GLFW_KEY_D);
+		Input input = Main.game.getInput();
+		boolean left = input.isKeyDown(GLFW_KEY_A);
+		boolean right = input.isKeyDown(GLFW_KEY_D);
 		if (!Boolean.logicalXor(left, right))
 			car.turn(0);
 		else if (left)
-			car.turn(1);
+			car.turn(input.isKeyDown(GLFW_KEY_LEFT_SHIFT)?0.5f:1);
 		else
-			car.turn(-1);
+			car.turn(input.isKeyDown(GLFW_KEY_LEFT_SHIFT)?-0.5f:-1);
 		
-		boolean forward = Main.game.getInput().isKeyDown(GLFW_KEY_W);
-		boolean backward = Main.game.getInput().isKeyDown(GLFW_KEY_S);
+		boolean forward = input.isKeyDown(GLFW_KEY_W);
+		boolean backward = input.isKeyDown(GLFW_KEY_S);
 		if (!Boolean.logicalXor(forward, backward))
 			car.drive(0);
 		else if (forward)
@@ -70,7 +73,7 @@ public class Player extends Entity {
 		else
 			car.drive(-0.8f);
 		
-		car.handbrake(Main.game.getInput().isKeyDown(GLFW_KEY_SPACE));
+		car.handbrake(input.isKeyDown(GLFW_KEY_SPACE));
 		
 		car.update();
 		

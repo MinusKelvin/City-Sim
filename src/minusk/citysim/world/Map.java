@@ -7,8 +7,14 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_Q;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_W;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL11.glGetError;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
+import static org.lwjgl.opengl.GL20.glUniform1i;
 import static org.lwjgl.opengl.GL20.glUniform2f;
 import static org.lwjgl.opengl.GL20.glUniformMatrix4fv;
 
@@ -56,13 +62,14 @@ public class Map implements Renderable, Updateable {
 	private HashMap<Point2I, Chunk> map = new HashMap<>();
 	private MapRenderer renderer;
 	private SpriteDrawPass carDraws;
-	private ColorDrawPass debug;
-	private Framebuffer above, below;
-	private Texture aboveTex, belowTex;
-	private TextureDrawPass abovePass,belowPass;
+	private ColorDrawPass debug, alphaPass;
+	private Framebuffer above, below, alpha;
+	private Texture aboveTex, belowTex, alphaTex;
+	private TextureDrawPass abovePass, belowPass;
 	private ArrayList<Entity> entities = new ArrayList<>();
-	private Shader s;
-	private int playerPosLoc, transLoc;
+	private Shader aboveShader, circleThingShader;
+	private int alphaLoc, pposLoc;
+	private float[] roll = new float[20];
 	
 	public Map() {
 		renderer = new MapRenderer();
@@ -84,16 +91,30 @@ public class Map implements Renderable, Updateable {
 		below.attachTextures(belowTex, 0, 0);
 		below.setDepthStencil(buffer);
 		
+		alpha = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
+		alphaTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false, 0);
+		alpha.attachTextures(alphaTex, 0, 0);
+		alpha.setClearColor(new Color(1f, 0, 0));
+		
 		abovePass = new TextureDrawPass(aboveTex);
 		abovePass.setBlendFunc(BlendFunc.TRANSPARENCY);
-		s = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/passthrough.vs"),
+		aboveShader = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/passthrough.vs"),
 				getClass().getResourceAsStream("/minusk/citysim/res/alpha.fs"));
-		s.link();
-		s.use();
-		abovePass.setShader(s, glGetUniformLocation(s.id, "proj"));
+		aboveShader.link();
+		aboveShader.use();
+		abovePass.setShader(aboveShader, glGetUniformLocation(aboveShader.id, "proj"));
 		belowPass = new TextureDrawPass(belowTex);
-		playerPosLoc = glGetUniformLocation(s.id, "ppos");
-		transLoc = glGetUniformLocation(s.id, "trans");
+		alphaLoc = glGetUniformLocation(aboveShader.id, "alpha");
+		
+		alphaPass = new ColorDrawPass();
+		alphaPass.camera = renderer.camera;
+		
+		circleThingShader = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/position.vs"),
+				getClass().getResourceAsStream("/minusk/citysim/res/circledampen.fs"));
+		circleThingShader.link();
+		circleThingShader.use();
+		pposLoc = glGetUniformLocation(circleThingShader.id, "ppos");
+		alphaPass.setShader(circleThingShader, glGetUniformLocation(circleThingShader.id, "proj"));
 		
 		debug = new ColorDrawPass();
 		debug.camera = renderer.camera;
@@ -140,8 +161,28 @@ public class Map implements Renderable, Updateable {
 			circleShape.setAsBox(1, 1);
 			physics.createBody(bodyDef).createFixture(circleShape, 50);
 		}
-		
-		renderer.camera.roll = -player.getPhysicsObject().getTransform().q.getAngle();
+
+		roll[19] = roll[18];
+		roll[18] = roll[17];
+		roll[17] = roll[16];
+		roll[16] = roll[15];
+		roll[15] = roll[14];
+		roll[14] = roll[13];
+		roll[13] = roll[12];
+		roll[12] = roll[11];
+		roll[11] = roll[10];
+		roll[10] = roll[9];
+		roll[9] = roll[8];
+		roll[8] = roll[7];
+		roll[7] = roll[6];
+		roll[6] = roll[5];
+		roll[5] = roll[4];
+		roll[4] = roll[3];
+		roll[3] = roll[2];
+		roll[2] = roll[1];
+		roll[1] = roll[0];
+		roll[0] = -player.getPhysicsObject().getTransform().q.getAngle();
+		renderer.camera.roll = roll[19];
 		physics.step(1/60f, 20, 15);
 		renderer.camera.transX = -player.getPhysicsObject().getTransform().p.x;
 		renderer.camera.transY = -player.getPhysicsObject().getTransform().p.y;
@@ -192,15 +233,25 @@ public class Map implements Renderable, Updateable {
 		
 		carDraws.end();
 		
+		circleThingShader.use();
+		glUniform2f(pposLoc, player.getCenter().x, player.getCenter().y);
+		
+		alpha.use();
+		alphaPass.begin();
+		alphaPass.drawRectangle(-100, 10, 0, 45, Color.Black);
+		alphaPass.end();
+		
 		Framebuffer.useDefaultFramebuffer();
 		
 		belowPass.begin();
 		belowPass.drawRectangle(-1, -1, 0, 0, 1, 1, 1, 1);
 		belowPass.end();
 
-		s.use();
-		glUniform2f(playerPosLoc, 1, 1);
-		glUniform2f(transLoc, 1-renderer.camera.transX, 1-renderer.camera.transY);
+		aboveShader.use();
+		glUniform1i(alphaLoc, 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, alphaTex.id);
+		glActiveTexture(GL_TEXTURE0);
 		
 		abovePass.begin();
 		abovePass.drawRectangle(-1, -1, 0, 0, 1, 1, 1, 1);
