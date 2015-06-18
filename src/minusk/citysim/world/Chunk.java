@@ -143,39 +143,24 @@ public class Chunk {
 		useable = true;
 	}
 	
-	private int lastIndex;
-	private boolean doDraw = true;
-	public void render(MapRenderer renderer, int stage) {
+	public void render(MapRenderer renderer) {
 		if (!useable)
 			return;
 		
 		renderer.setChunkOffset(x, y);
 		
-		if (stage != -1) {
-			lastIndex = 0;
-			doDraw = true;
-		}
-		
 		if (outputRoadInformation)
 			System.out.println("Chunk " + x + ", " + y);
 		
-		if (doDraw) {
-			doDraw = false;
-			for (int i = lastIndex; i < roads.size(); i++) {
-				Road road = roads.get(i);
-				if (stage != -1 && stage < road.z) {
-					lastIndex = i;
-					doDraw = true;
-					break;
-				}
-				
-				if (outputRoadInformation)
-					System.out.println("Road number " + i);
-				
-				renderer.drawRoad(road,outputRoadInformation);
-			}
+		for (int i = 0; i < roads.size(); i++) {
+			Road road = roads.get(i);
+			
+			if (outputRoadInformation)
+				System.out.println("Road number " + i);
+			
+			renderer.drawRoad(road,outputRoadInformation);
 		}
-		outputRoadInformation = stage != -1 && outputRoadInformation;
+		outputRoadInformation = false;
 	}
 	
 	private static String hex(int i) {

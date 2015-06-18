@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import minusk.citysim.Main;
+import minusk.citysim.devtools.REDebugDraw;
 import minusk.citysim.entities.Entity;
 import minusk.citysim.entities.friendly.Player;
 import minusk.render.core.Input;
@@ -37,6 +38,7 @@ import minusk.render.graphics.globjects.Texture;
 import minusk.render.interfaces.Renderable;
 import minusk.render.interfaces.Updateable;
 
+import org.jbox2d.callbacks.DebugDraw;
 import org.jbox2d.collision.shapes.ChainShape;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.collision.shapes.Shape;
@@ -57,14 +59,9 @@ public class Map implements Renderable, Updateable {
 	private HashMap<Point2I, Chunk> map = new HashMap<>();
 	private MapRenderer renderer;
 	private SpriteDrawPass carDraws;
-	private ColorDrawPass debug, alphaPass;
-	private Framebuffer above, below, alpha;
-	private MultisampledTexture aboveTex, belowTex;
-	private Texture alphaTex;
-	private MultisampledTextureDrawPass abovePass, belowPass;
 	private ArrayList<Entity> entities = new ArrayList<>();
-	private Shader aboveShader, circleThingShader;
 	private int alphaLoc, pposLoc;
+	private REDebugDraw debug = new REDebugDraw();
 	private float[] roll = new float[20];
 	
 	public Map() {
@@ -75,49 +72,13 @@ public class Map implements Renderable, Updateable {
 		carDraws = new SpriteDrawPass(sheet);
 		carDraws.camera = renderer.camera;
 		carDraws.setBlendFunc(BlendFunc.TRANSPARENCY);
-		
-		DepthStencilBuffer buffer = new DepthStencilBuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		above = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		aboveTex = new MultisampledTexture(Main.game.getResolutionX(), Main.game.getResolutionY(), 8, false);
-		above.attachTextures(aboveTex, 0);
-		above.setDepthStencil(buffer);
-		
-		below = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		belowTex = new MultisampledTexture(Main.game.getResolutionX(), Main.game.getResolutionY(), 8, false);
-		below.attachTextures(belowTex, 0);
-		below.setDepthStencil(buffer);
-		
-		alpha = new Framebuffer(Main.game.getResolutionX(), Main.game.getResolutionY());
-		alphaTex = new Texture(Main.game.getResolutionX(), Main.game.getResolutionY(), 1, false);
-		alpha.attachTextures(alphaTex, 0, 0);
-		alpha.setClearColor(new Color(1f, 0, 0));
-		
-		abovePass = new MultisampledTextureDrawPass(aboveTex);
-		abovePass.setBlendFunc(BlendFunc.TRANSPARENCY);
-		aboveShader = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/passthrough.vs"),
-				getClass().getResourceAsStream("/minusk/citysim/res/alpha.fs"));
-		aboveShader.link();
-		aboveShader.use();
-		abovePass.setShader(aboveShader, glGetUniformLocation(aboveShader.id, "proj"), glGetUniformLocation(aboveShader.id, "samples"));
-		belowPass = new MultisampledTextureDrawPass(belowTex);
-		alphaLoc = glGetUniformLocation(aboveShader.id, "alpha");
-		
-		alphaPass = new ColorDrawPass();
-		alphaPass.camera = renderer.camera;
-		
-		circleThingShader = new Shader(getClass().getResourceAsStream("/minusk/citysim/res/position.vs"),
-				getClass().getResourceAsStream("/minusk/citysim/res/circledampen.fs"));
-		circleThingShader.link();
-		circleThingShader.use();
-		pposLoc = glGetUniformLocation(circleThingShader.id, "ppos");
-		alphaPass.setShader(circleThingShader, glGetUniformLocation(circleThingShader.id, "proj"));
-		
-		debug = new ColorDrawPass();
-		debug.camera = renderer.camera;
 	}
 	
 	public void init() {
 		player.init();
+		debug.initalize(renderer.camera);
+		debug.appendFlags(DebugDraw.e_shapeBit);
+		physics.setDebugDraw(debug);
 	}
 	
 	@Override
@@ -158,27 +119,7 @@ public class Map implements Renderable, Updateable {
 			physics.createBody(bodyDef).createFixture(circleShape, 50);
 		}
 
-		roll[19] = roll[18];
-		roll[18] = roll[17];
-		roll[17] = roll[16];
-		roll[16] = roll[15];
-		roll[15] = roll[14];
-		roll[14] = roll[13];
-		roll[13] = roll[12];
-		roll[12] = roll[11];
-		roll[11] = roll[10];
-		roll[10] = roll[9];
-		roll[9] = roll[8];
-		roll[8] = roll[7];
-		roll[7] = roll[6];
-		roll[6] = roll[5];
-		roll[5] = roll[4];
-		roll[4] = roll[3];
-		roll[3] = roll[2];
-		roll[2] = roll[1];
-		roll[1] = roll[0];
-		roll[0] = -player.getPhysicsObject().getTransform().q.getAngle();
-		renderer.camera.roll = roll[19];
+		renderer.camera.roll = -player.getPhysicsObject().getTransform().q.getAngle();
 		physics.step(1/60f, 20, 15);
 		renderer.camera.transX = -player.getPhysicsObject().getTransform().p.x;
 		renderer.camera.transY = -player.getPhysicsObject().getTransform().p.y;
@@ -186,112 +127,18 @@ public class Map implements Renderable, Updateable {
 	
 	@Override
 	public void render() {
-		below.use();
 		renderer.begin();
-		for (Chunk c : map.values())
-			c.render(renderer, player.getLayer());
+		for (Chunk chunk : map.values())
+			chunk.render(renderer);
 		renderer.end();
 		
 		carDraws.begin();
-		
-		int lastindex = -1;
-		for (int i = 0; i < entities.size(); i++) {
-			Entity entity = entities.get(i);
-			if (entity.getLayer() > player.getLayer()) {
-				lastindex = i;
-				break;
-			}
+		for (Entity entity : entities)
 			entity.render();
-		}
 		player.render();
-		
 		carDraws.end();
-		
-		above.use();
-		
-		renderer.begin();
-		for (Chunk c : map.values())
-			c.render(renderer, -1);
-		renderer.end();
-		
-		carDraws.begin();
-		
-		if (lastindex != -1) {
-			for (int i = lastindex; i < entities.size(); i++) {
-				Entity entity = entities.get(i);
-				if (entity.getLayer() > player.getLayer()) {
-					lastindex = i;
-					break;
-				}
-				entity.render();
-			}
-		}
-		
-		carDraws.end();
-		
-		circleThingShader.use();
-		glUniform2f(pposLoc, player.getCenter().x, player.getCenter().y);
-		
-		alpha.use();
-		alphaPass.begin();
-		alphaPass.drawRectangle(-100, 10, 0, 45, Color.Black);
-		alphaPass.end();
-		
-		Framebuffer.useDefaultFramebuffer();
 
-		belowPass.begin();
-		belowPass.drawRectangle(-1, -1, 0, 0, 1, 1, Main.game.getResolutionX(), Main.game.getResolutionY());
-		belowPass.end();
-
-		aboveShader.use();
-		glUniform1i(alphaLoc, 1);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, alphaTex.id);
-		glActiveTexture(GL_TEXTURE0);
-		
-		abovePass.begin();
-		abovePass.drawRectangle(-1, -1, 0, 0, 1, 1, Main.game.getResolutionX(), Main.game.getResolutionY());
-		abovePass.end();
-		
-		debug.begin();
-		for (Joint joint = physics.getJointList(); joint != null; joint = joint.getNext()) {
-			Vec2 vec1 = new Vec2();
-			Vec2 vec2 = new Vec2();
-			joint.getAnchorA(vec1);
-			joint.getAnchorB(vec2);
-			debug.drawLine(vec1.x, vec1.y, vec2.x, vec2.y, 0.05f, 15, Color.Green);
-		}
-		for (Body body = physics.getBodyList(); body != null; body = body.getNext()) {
-			for (Fixture fixture = body.getFixtureList(); fixture != null; fixture = fixture.getNext()) {
-				Shape shape = fixture.getShape();
-				switch (shape.getType()) {
-				case CHAIN:
-					ChainShape c = (ChainShape) shape;
-					for (int i = 1; i < c.m_count; i++) {
-						Vec2 p1 = body.getWorldPoint(c.m_vertices[i-1]);
-						Vec2 p2 = body.getWorldPoint(c.m_vertices[i]);
-						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.05f, 15, Color.Cyan);
-					}
-					break;
-				case CIRCLE:
-					break;
-				case EDGE:
-					break;
-				case POLYGON:
-					PolygonShape p = (PolygonShape) shape;
-					for (int i = 1; i < p.getVertexCount(); i++) {
-						Vec2 p1 = body.getWorldPoint(p.getVertices()[i-1]);
-						Vec2 p2 = body.getWorldPoint(p.getVertices()[i]);
-						debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.05f, 15, Color.Red);
-					}
-					Vec2 p1 = body.getWorldPoint(p.getVertices()[p.getVertexCount()-1]);
-					Vec2 p2 = body.getWorldPoint(p.getVertices()[0]);
-					debug.drawLine(p1.x, p1.y, p2.x, p2.y, 0.05f, 15, Color.Red);
-					break;
-				}
-			}
-		}
-		debug.end();
+		physics.drawDebugData();
 	}
 	
 	public SpriteDrawPass getCarDrawer() {

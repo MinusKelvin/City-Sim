@@ -23,7 +23,9 @@ class MapRenderer {
 			-Main.game.getResolutionX()/32f,
 			Main.game.getResolutionX()/32f,
 			Main.game.getResolutionY()/32f,
-			-Main.game.getResolutionY()/32f);
+			-Main.game.getResolutionY()/32f,
+			0,
+			10);
 	
 	MapRenderer() {
 		Texture roadTex = new Texture(128,128,1,false);
